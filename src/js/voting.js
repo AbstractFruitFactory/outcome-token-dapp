@@ -32,6 +32,15 @@ const Voting = {
         return new Promise((resolve, reject) => {
             self.instance.vote(address, vote, { from: window.web3.eth.coinbase })
         })
+    },
+
+    getVoteStatus: function(address) {
+        let self = this
+        return new Promise((resolve, reject) => {
+            self.instance.checkVote.call(address).then(function(result) {
+                resolve(result)
+            })
+        })
     }
 }
 

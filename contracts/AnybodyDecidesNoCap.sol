@@ -5,11 +5,11 @@ import './IVotingMechanism.sol';
 
 contract AnybodyDecidesNoCap is IVotingMechanism {
     
-    function checkVote(address _topic) constant returns (Vote result) {
+    function checkVote(address _topic) view returns (Vote result) {
         return voteStatus[_topic];
     }
     
-    function checkCap(ERC20 _payoutToken, address _topic, uint _value) constant returns (bool allowed) {
+    function checkCap(ERC20 _payoutToken, address _topic, uint _value) view returns (bool allowed) {
         return true;
     }
     

@@ -13,6 +13,8 @@
             {{ name }} :  <input v-model="backValue">
             <input id="BackBtn" type="button" value="Back Outcome" @click="back(name)">
             <input id="VoteBtn" type="button" value="Vote for Outcome" @click="vote(name)">
+            <input v-model="redeemValue">
+            <input id="RedeemBtn" type="button" value="Redeem Tokens" @click="redeem(name)">
         </li>
       </ul>
     </div>
@@ -33,6 +35,7 @@ export default {
       outcomeName: "",
       disabled: false,
       backValue: "",
+      redeemValue: 0,
       Vote: {
         UNKNOWN: 0,
         MET: 1,
@@ -59,9 +62,25 @@ export default {
       Voting.vote(this.outcomes.get(name), this.selectedVote);
     },
 
+    redeem: async function(name) {
+      let self = this
+      let contractAddress = self.outcomes.get(name)
+      let voteStatus = await Voting.getVoteStatus(contractAddress)
+      let isOwner = await OutcomeToken.isOwner(contractAddress)
+
+      if((voteStatus == self.Vote.NOT_MET) && isOwner) {
+        OutcomeToken.redeemBackerToken(contractAddress, self.redeemValue)
+      } else if (voteStatus == self.Vote.MET) {
+        OutcomeToken.redeemRewardToken(contractAddress, self.redeemValue)
+      } else {
+        console.log("Invalid action.")
+      }
+    },
+
     addOutcomeToken: function() {
-      var self = this;
+      let self = this;
       self.disabled = true;
+
       OutcomeToken.deployNew(self.outcomeName).then(function(contract) {
         self.outcomes.set(self.outcomeName, contract.address);
         self.outcomeNames.push(self.outcomeName);
