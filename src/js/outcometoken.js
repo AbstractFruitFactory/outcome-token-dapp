@@ -2,7 +2,7 @@ import contract from 'truffle-contract'
 import OutcomeContract from '@contracts/OutcomeToken.json'
 
 const OutcomeToken = {
-
+    
     contract: null,
     init: function () {
         let self = this
@@ -48,9 +48,13 @@ const OutcomeToken = {
 
     deployNew: function (name, voting) {
         let self = this
+    
         return new Promise((resolve, reject) => {
-            self.contract.new(name, voting, { from: window.web3.eth.coinbase, gas: 2300000, gasPrice: 100000000000 }).then(function(address) {
-                resolve(address);
+            self.contract.new(name, voting, { from: window.web3.eth.coinbase, gas: 2300000, gasPrice: 100000000000 }).then(function(instance) {
+                self.contract.at(instance.address).getVotingAddress.call().then(function(result) {
+                    console.log(result)
+                })
+                resolve(instance.address)
             })
             
         })

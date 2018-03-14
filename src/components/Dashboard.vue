@@ -80,9 +80,10 @@ export default {
     addOutcomeToken: function() {
       let self = this;
       self.disabled = true;
+      let voting = Voting.getVotingAddress()
 
-      OutcomeToken.deployNew(self.outcomeName).then(function(contract) {
-        self.outcomes.set(self.outcomeName, contract.address);
+      OutcomeToken.deployNew(self.outcomeName, voting).then(function(address) {
+        self.outcomes.set(self.outcomeName, address);
         self.outcomeNames.push(self.outcomeName);
         self.outcomeName = "";
         self.disabled = false;

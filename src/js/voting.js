@@ -41,6 +41,10 @@ const Voting = {
                 resolve(result)
             })
         })
+    },
+
+    getVotingAddress: function() {
+        return this.instance.address
     }
 }
 
