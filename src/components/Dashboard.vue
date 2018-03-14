@@ -15,6 +15,9 @@
             <input id="VoteBtn" type="button" value="Vote for Outcome" @click="vote(name)">
             <input v-model="redeemValue">
             <input id="RedeemBtn" type="button" value="Redeem Tokens" @click="redeem(name)">
+            <input v-model="transferAmount">
+            <input v-model="recipient">
+            <input id="TransferBtn" type="button" value="Transfer Tokens" @click="transfer(name)">
         </li>
       </ul>
     </div>
@@ -41,7 +44,9 @@ export default {
         MET: 1,
         NOT_MET: 2
       },
-      selectedVote: undefined
+      selectedVote: undefined,
+      transferAmount: 0,
+      recipient: 0x0
     };
   },
   computed: {
@@ -75,6 +80,12 @@ export default {
       } else {
         console.log("Invalid action.")
       }
+    },
+
+    transfer: function(name) {
+      let self = this
+      let contractAddress = self.outcomes.get(name)
+      OutcomeToken.transferTokens(contractAddress, self.recipient, self.transferAmount)
     },
 
     addOutcomeToken: function() {
