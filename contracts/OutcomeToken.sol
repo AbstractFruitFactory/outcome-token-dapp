@@ -56,6 +56,10 @@ contract OutcomeToken is StandardToken, Ownable {
         return voting;
     }
 
+    function getName() view returns (string) {
+        return name;
+    }
+
     function isOwner() view returns (bool) {
         if (owner == msg.sender) {
             return true;
