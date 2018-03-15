@@ -30,7 +30,9 @@ const Voting = {
     vote: function (address, vote) {
         let self = this
         return new Promise((resolve, reject) => {
-            self.instance.vote(address, vote, { from: window.web3.eth.coinbase })
+            self.instance.vote(address, vote, { from: window.web3.eth.coinbase }).then(function() {
+                resolve()
+            })
         })
     },
 
