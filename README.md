@@ -8,13 +8,13 @@ In the project folder:
 
 And in a seperate command line window, run the development blockchain instance with:
 
-```truffle develop```
+```npx truffle develop```
 
 Then, in the project folder, enter:
 
-```truffle compile```
+```npx truffle compile```
 
-```truffle migrate```
+```npx truffle migrate```
 
 ```npm run start```
 
