@@ -1,10 +1,16 @@
 <template>
   <div class="dashboard">
+    <div id="title">
     <h1>{{ msg }}</h1>
+    </div>
     <div>
-      <input v-model="outcomeName">
-      <input v-on:click="addOutcomeToken" id="AddOutcomeBtn" type="button" value="Add Outcome Token" :disabled="isDisabled">
-      <md-button class="md-raised md-primary">Test</md-button>
+      <h2>Enter outcome name:</h2>
+      <div id="addOutcomeInput">
+        <md-field>
+          <md-input v-model="outcomeName"></md-input>
+        </md-field>
+      </div>
+      <md-button class="md-raised md-primary" v-on:click="addOutcomeToken" id="AddOutcomeBtn" type="button" :disabled="isDisabled">Add Outcome Token</md-button>
       <ul>
         <li v-for="outcomeAddress in outcomes" :key="outcomeAddress.id">
             <OutcomeItem :address="outcomeAddress"></OutcomeItem>
@@ -80,5 +86,17 @@ li {
 
 a {
   color: #42b983;
+}
+
+#addOutcomeInput {
+  width: 150px;
+  align-content: center;
+  margin: auto;
+  
+}
+
+#title {
+  padding-bottom: 5%;
+  font-size: 120%;
 }
 </style>
