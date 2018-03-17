@@ -4,6 +4,7 @@
     <div>
       <input v-model="outcomeName">
       <input v-on:click="addOutcomeToken" id="AddOutcomeBtn" type="button" value="Add Outcome Token" :disabled="isDisabled">
+      <md-button class="md-raised md-primary">Test</md-button>
       <ul>
         <li v-for="outcomeAddress in outcomes" :key="outcomeAddress.id">
             <OutcomeItem :address="outcomeAddress"></OutcomeItem>

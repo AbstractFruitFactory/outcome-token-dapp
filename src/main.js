@@ -4,7 +4,10 @@ import Vue from 'vue'
 import App from './App'
 import Web3 from 'web3'
 import router from './router'
+import VueMaterial from 'vue-material'
+import 'vue-material/dist/vue-material.css'
 
+Vue.use(VueMaterial)
 Vue.config.productionTip = false
 
 window.addEventListener('load', function () {
