@@ -21,6 +21,14 @@ import * as Web3ProviderEngine from 'web3-provider-engine'
 import { InjectedWeb3Subprovider } from '@0xproject/subproviders'
 import * as RPCSubprovider from 'web3-provider-engine/subproviders/rpc';
 import { Web3Wrapper } from '@0xproject/web3-wrapper';
+var providerEngine = new Web3ProviderEngine();
+
+providerEngine.addProvider(new InjectedWeb3Subprovider(window.web3.currentProvider));
+
+providerEngine.addProvider(new RPCSubprovider({ rpcUrl: 'http://localhost:9545' }));
+providerEngine.start();
+var zeroEx = new ZeroEx(providerEngine, { networkId: 3 });
+
 
 export default {
     data() {
@@ -37,17 +45,6 @@ export default {
     },
 
     created: function() {
-
-        // Create a Web3 Provider Engine
-        const providerEngine = new Web3ProviderEngine();
-        // Compose our Providers, order matters
-        // Use the InjectedWeb3Subprovider to wrap the browser extension wallet
-        // All account based and signing requests will go through the InjectedWeb3Subprovider
-        providerEngine.addProvider(new InjectedWeb3Subprovider(window.web3.currentProvider));
-        // Use an RPC provider to route all other requests
-        providerEngine.addProvider(new RPCSubprovider({ rpcUrl: 'http://localhost:9545' }));
-        providerEngine.start();
-
         // Optional, use with 0x.js
         this.decimals = 18
         this.makerTokenAddress = Addresses.WETH_ADDRESS
@@ -78,7 +75,7 @@ export default {
         },
 
         makeOrder: async function() {
-            const zeroEx = new ZeroEx(window.web3.currentProvider, { networkId: 3 });
+            
             var makerAddress = window.web3.eth.coinbase
             const order = {
                 maker: makerAddress,
@@ -97,6 +94,7 @@ export default {
             console.log(order)
             const orderHash = ZeroEx.getOrderHashHex(order)
             const shouldAddPersonalMessagePrefix = false
+            
             const ecSignature = await zeroEx.signOrderHashAsync(orderHash, makerAddress, shouldAddPersonalMessagePrefix)
         
             // Append signature to order
@@ -125,8 +123,9 @@ export default {
         },
 
         convertEthToWeth: async function() {
+            const zeroEx = new ZeroEx(window.web3.currentProvider, { networkId: 3 });
             const ethToConvert = ZeroEx.toBaseUnitAmount(new BigNumber(this.wethAmount), this.decimals)
-            const convertEthTxHash = await zeroEx.etherToken.depositAsync(WETH_ADDRESS, ethToConvert, window.web3.eth.coinbase)
+            const convertEthTxHash = await zeroEx.etherToken.depositAsync(Addresses.WETH_ADDRESS, ethToConvert, window.web3.eth.coinbase)
             await zeroEx.awaitTransactionMinedAsync(convertEthTxHash)
         },
 
