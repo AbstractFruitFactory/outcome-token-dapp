@@ -95,7 +95,6 @@ export default {
                 expirationUnixTimestampSec: new BigNumber(Date.now() + 3600000), // Valid for up to an hour
             }
             console.log(order)
-            this.order.maker = makerAddress
             const orderHash = ZeroEx.getOrderHashHex(order)
             const shouldAddPersonalMessagePrefix = false
             const ecSignature = await zeroEx.signOrderHashAsync(orderHash, makerAddress, shouldAddPersonalMessagePrefix)
