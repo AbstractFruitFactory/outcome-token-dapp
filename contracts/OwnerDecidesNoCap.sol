@@ -1,9 +1,10 @@
 pragma solidity ^0.4.17;
 
 import '../node_modules/zeppelin-solidity/contracts/token/ERC20/ERC20.sol';
+import './OutcomeToken.sol';
 import './IVotingMechanism.sol';
 
-contract AnybodyDecidesNoCap is IVotingMechanism {
+contract OwnerDecidesNoCap is IVotingMechanism {
     
     function checkVote(address _topic) view returns (Vote result) {
         return voteStatus[_topic];
@@ -14,6 +15,8 @@ contract AnybodyDecidesNoCap is IVotingMechanism {
     }
     
     function vote(address _topic, Vote _vote) {
+        OutcomeToken outcome = OutcomeToken(_topic);
+        require(msg.sender == outcome.owner());
         require(_vote != Vote.UNKNOWN);
         require(voteStatus[_topic] == Vote.UNKNOWN);
         voteStatus[_topic] = _vote;

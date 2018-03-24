@@ -2,3 +2,4 @@ build
 node_modules
 .editorconfig
 launch.json
+seed_words.txt

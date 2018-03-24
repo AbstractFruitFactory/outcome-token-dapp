@@ -3,6 +3,7 @@
     <div id="title">
     <h1>{{ msg }}</h1>
     </div>
+    <Order></Order>
     <div>
       <h2>Enter outcome name:</h2>
       <div id="addOutcomeInput">
@@ -26,6 +27,7 @@
 import OutcomeToken from "@/js/outcometoken.js"
 import Voting from "@/js/voting.js"
 import OutcomeItem from "@/components/OutcomeItem.vue"
+import Order from "@/components/Order.vue"
 
 export default {
   name: "dashboard",
@@ -48,7 +50,8 @@ export default {
     OutcomeToken.init();
   },
   components: {
-    OutcomeItem
+    OutcomeItem,
+    Order
   },
   methods: {
     addOutcomeToken: function() {

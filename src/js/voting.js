@@ -1,5 +1,5 @@
 import contract from 'truffle-contract'
-import VotingContract from '@contracts/AnybodyDecidesNoCap.json'
+import VotingContract from '@contracts/OwnerDecidesNoCap.json'
 
 const Voting = {
 
