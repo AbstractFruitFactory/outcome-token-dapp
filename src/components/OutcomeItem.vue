@@ -39,7 +39,6 @@ import Voting from "@/js/voting.js";
 export default {
   data() {
     return {
-      name: undefined,
       backValue: undefined,
       redeemValue: undefined,
       transferValue: undefined,
@@ -57,14 +56,7 @@ export default {
     };
   },
 
-  props: ["address"],
-
-  created: function() {
-    let self = this;
-    OutcomeToken.getName(self.address).then(function(name) {
-      self.name = name;
-    });
-  },
+  props: ["address", "name"],
 
   methods: {
     back: function() {
@@ -109,6 +101,13 @@ export default {
             self.showTransferDialog = false;
       });
     },
+
+    getNameAndAddress() {
+      return {
+        name: this.name,
+        address: this.address
+      }
+    }
   }
 };
 </script>

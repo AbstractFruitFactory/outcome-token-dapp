@@ -1,9 +1,16 @@
 <template>
   <div class="dashboard">
     <div id="title">
-    <h1>{{ msg }}</h1>
+      <h1>{{ msg }}</h1>
     </div>
-    <Order></Order>
+    <div id="topContainer">
+      <div id="innerContainer">
+        <SetAllowance class="topContainerChild" :outcomes="outcomes"></SetAllowance>
+        <MakeOrder class="topContainerChild" :outcomes="outcomes" @orderSubmitted="addOrder"></MakeOrder>
+        <GetWethBtn class="topContainerChild"></GetWethBtn>
+      </div>
+    </div>
+    <OrderList ref="orderlist"></OrderList>
     <div>
       <h2>Enter outcome name:</h2>
       <div id="addOutcomeInput">
@@ -13,8 +20,8 @@
       </div>
       <md-button class="md-raised md-primary" v-on:click="addOutcomeToken" id="AddOutcomeBtn" type="button" :disabled="isDisabled">Add Outcome Token</md-button>
       <ul>
-        <li v-for="outcomeAddress in outcomes" :key="outcomeAddress.id">
-            <OutcomeItem :address="outcomeAddress"></OutcomeItem>
+        <li v-for="outcome in outcomes" :key="outcome.address">
+            <OutcomeItem :name="outcome.name" :address="outcome.address"></OutcomeItem>
         </li><br>
         <br>
         <br>
@@ -27,7 +34,10 @@
 import OutcomeToken from "@/js/outcometoken.js"
 import Voting from "@/js/voting.js"
 import OutcomeItem from "@/components/OutcomeItem.vue"
-import Order from "@/components/Order.vue"
+import MakeOrder from "@/components/MakeOrder.vue"
+import GetWethBtn from "@/components/GetWethBtn.vue"
+import SetAllowance from "@/components/SetAllowance.vue"
+import OrderList from "@/components/OrderList.vue"
 
 export default {
   name: "dashboard",
@@ -51,7 +61,10 @@ export default {
   },
   components: {
     OutcomeItem,
-    Order
+    SetAllowance,
+    OrderList,
+    GetWethBtn,
+    MakeOrder
   },
   methods: {
     addOutcomeToken: function() {
@@ -60,10 +73,21 @@ export default {
       let voting = Voting.getVotingAddress();
 
       OutcomeToken.deployNew(self.outcomeName, voting).then(function(address) {
-        self.outcomes.push(address)
+        self.outcomes.push({ 
+          address: address,
+          name: self.outcomeName
+        })
         self.outcomeName = "";
         self.disabled = false;
       });
+    },
+
+    addOrder: function(signedOrder) {
+      this.$refs.orderlist.addSignedOrder(signedOrder)
+    },
+
+    getOutcomes: function() {
+      return this.outcomes
     }
   }
 };
@@ -101,5 +125,18 @@ a {
 #title {
   padding-bottom: 5%;
   font-size: 120%;
+}
+
+.inline-block-center {
+  text-align: center;
+}
+.inline-block-center div {
+  display: inline-block;
+  text-align: left;
+}
+
+#topContainer {
+  display: flex;
+  justify-content: center;
 }
 </style>
