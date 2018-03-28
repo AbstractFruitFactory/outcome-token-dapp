@@ -9,8 +9,8 @@
                 <md-field>
                     <label for="Outcome Token">Outcome Token</label>
                     <md-select v-model="makerTokenAddress" name="Outcome token">
-                        <div v-for="outcome in outcomes" :key="outcome.address">
-                            <md-option :value="outcome.address">{{ outcome.name }}</md-option>
+                        <div v-for="outcomeAddress in Object.keys(outcomes)" :key="outcomeAddress">
+                            <md-option :value="outcomeAddress">{{ outcomes[outcomeAddress] }}</md-option>
                         </div>
                     </md-select>
                 </md-field>
@@ -24,8 +24,8 @@
                 <md-field>
                     <label for="Outcome Token">Outcome Token</label>
                     <md-select v-model="takerTokenAddress" name="Outcome token">
-                        <div v-for="outcome in outcomes" :key="outcome.address">
-                            <md-option :value="outcome.address">{{ outcome.name }}</md-option>
+                        <div v-for="outcomeAddress in Object.keys(outcomes)" :key="outcomeAddress">
+                            <md-option :value="outcomeAddress">{{ outcomes[outcomeAddress] }}</md-option>
                         </div>
                     </md-select>
                 </md-field>
@@ -140,7 +140,7 @@
                         json: true,
                     })
                     self.showDialog = false
-                    self.$emit('orderSubmitted')
+                    self.$emit('orderSubmitted', signedOrder)
                 })
             }
         }

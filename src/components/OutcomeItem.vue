@@ -112,13 +112,6 @@
         ).then(function() {
           self.showTransferDialog = false;
         });
-      },
-  
-      getNameAndAddress() {
-        return {
-          name: this.name,
-          address: this.address
-        }
       }
     }
   };

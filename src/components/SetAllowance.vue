@@ -6,7 +6,7 @@
             <md-field>
                 <label for="Outcome Token">Outcome Token</label>
                 <md-select v-model="outcomeAddress" name="Outcome token">
-                    <md-option v-for="outcome in outcomes" :key="outcome.address" :value="outcome.address">{{ outcome.name }}</md-option>
+                    <md-option v-for="outcomeAddress in Object.keys(outcomes)" :key="outcomeAddress" :value="outcomeAddress">{{ outcomes[outcomeAddress] }}</md-option>
                 </md-select>
             </md-field>
             <md-button class="md-raised md-primary" @click="setAllowance()">Submit</md-button>

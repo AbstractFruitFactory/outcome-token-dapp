@@ -11,7 +11,7 @@
         </md-dialog>
     
         <md-list id="orderList" v-for="signedOrder in signedOrders" :key="signedOrder.id">
-            <md-list-item @click="orderDialog(signedOrder)">{{ signedOrder.makerTokenAmount/10**18 }} {{ signedOrder.makerTokenAddress }} for {{ signedOrder.takerTokenAmount/10**18 }} {{ signedOrder.takerTokenAddress }}</md-list-item>
+            <md-list-item @click="orderDialog(signedOrder)">{{ signedOrder.makerTokenAmount/10**18 }} {{ getTokenName(signedOrder.makerTokenAddress) }} for {{ signedOrder.takerTokenAmount/10**18 }} {{ getTokenName(signedOrder.takerTokenAddress) }}</md-list-item>
         </md-list>
     </div>
 </template>
@@ -71,6 +71,8 @@
             })
         },
     
+        props: ["outcomes"],
+    
         methods: {
             takeOrder: async function() {
                 var takerAddress = window.web3.eth.coinbase
@@ -85,7 +87,7 @@
                 const txReceipt = await zeroEx.awaitTransactionMinedAsync(txHash)
                 console.log('FillOrder transaction receipt: ', txReceipt)
             },
-
+    
             orderDialog: function(signedOrder) {
                 this.currentOrder = signedOrder
                 this.showDialog = true
@@ -93,17 +95,25 @@
     
             updateList: function() {
                 var self = this
+                self.signedOrders = []
                 rp({
                     method: 'GET',
                     uri: openrelayBaseURL + "/v0/orders",
                     json: true,
                 }).then((orders) => {
-                    self.signedOrders = []
                     for (var order of orders) {
                         self.signedOrders.push(order)
-                        console.log(order)
                     }
                 })
+            },
+
+            getTokenName: function(tokenAddress) {
+                if(tokenAddress in this.outcomes) {
+                    console.log(this.outcomes[tokenAddress])
+                    return this.outcomes[tokenAddress]
+                } else {
+                    return tokenAddress
+                }
             }
         }
     };
@@ -111,6 +121,6 @@
 
 <style>
     #orderList {
-         display:inline-block;
+        display: inline-block;
     }
 </style>
