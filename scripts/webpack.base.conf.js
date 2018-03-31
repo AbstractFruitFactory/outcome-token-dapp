@@ -35,7 +35,7 @@ module.exports = {
   },
   module: {
     rules: [
-      {
+      /*
         test: /\.(js|vue)$/,
         loader: 'eslint-loader',
         enforce: 'pre',
@@ -45,7 +45,9 @@ module.exports = {
           configFile: resolve('config/eslint/.eslintrc.js'),
           ignorePath: resolve('config/eslint/.eslintignore')
         }
-      },
+      }*/
+
+      
       {
         test: /\.vue$/,
         loader: 'vue-loader',

@@ -64,6 +64,8 @@ const OutcomeToken = {
         return new Promise((resolve, reject) => {
             self.contract.at(address).getName().then(function(result) {
                 resolve(result)
+            }).catch(function() {
+                resolve(address)
             })
         })
     },

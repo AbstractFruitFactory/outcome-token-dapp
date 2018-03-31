@@ -1,43 +1,72 @@
 <template>
   <div class="dashboard">
-    <div id="title">
-      <h1>{{ msg }}</h1>
-    </div>
-    <div id="topContainer">
-      <div id="innerContainer">
-        <SetAllowance class="topContainerChild" :outcomes="outcomes"></SetAllowance>
-        <MakeOrder class="topContainerChild" :outcomes="outcomes" @orderSubmitted="addOrder"></MakeOrder>
-        <GetWethBtn class="topContainerChild"></GetWethBtn>
-      </div>
-    </div>
-    <OrderList ref="orderlist" :outcomes="outcomes"></OrderList>
-    <div>
-      <h2>Enter outcome name:</h2>
-      <div id="addOutcomeInput">
-        <md-field>
-          <md-input v-model="outcomeName"></md-input>
-        </md-field>
-      </div>
-      <md-button class="md-raised md-primary" v-on:click="addOutcomeToken" id="AddOutcomeBtn" type="button" :disabled="isDisabled">Add Outcome Token</md-button>
-      <ul>
-        <li v-for="outcomeAddress in Object.keys(outcomes)" :key="outcomeAddress">
-            <OutcomeItem :name="outcomes[outcomeAddress]" :address="outcomeAddress"></OutcomeItem>
-        </li><br>
-        <br>
-        <br>
-      </ul>
-    </div>
+      <md-app>
+        <md-app-toolbar class="md-primary">
+          <span class="md-title">Outcome Token Test DApp</span>
+        </md-app-toolbar>
+
+        <md-app-drawer md-permanent="clipped">
+          <md-list>
+            <md-list-item @click="toggleContent(0)">
+              <md-icon>move_to_inbox</md-icon>
+              <span class="md-list-item-text">Orders</span>
+            </md-list-item>
+             <md-list-item @click="toggleContent(1)">
+              <md-icon>move_to_inbox</md-icon>
+              <span class="md-list-item-text">Make order</span>
+            </md-list-item>
+            <md-list-item @click="toggleContent(2)">
+              <md-icon>move_to_inbox</md-icon>
+              <span class="md-list-item-text">Add outcome</span>
+            </md-list-item>
+          </md-list>
+        </md-app-drawer>
+        <md-app-content>
+          <div v-if="showMakeOrder == true">
+            <SetAllowance :outcomes="outcomes"></SetAllowance>
+            <GetWethBtn></GetWethBtn>
+            <MakeOrder :outcomes="outcomes" @orderSubmitted="addOrder"></MakeOrder>
+          </div>
+
+          <div v-if="showOrderList == true">
+            <OrderList ref="orderlist"></OrderList>
+          </div>
+          <div v-if="showAddOutcome == true">
+            <h2>Enter outcome name:</h2>
+            <div id="addOutcomeInput">
+              <md-field>
+                <md-input v-model="outcomeName"></md-input>
+              </md-field>
+            </div>
+            <md-button class="md-raised md-primary" v-on:click="addOutcomeToken" id="AddOutcomeBtn" type="button">Add Outcome Token</md-button>
+            <ul>
+              <li v-for="outcomeAddress in Object.keys(outcomes)" :key="outcomeAddress">
+                  <OutcomeItem :name="outcomes[outcomeAddress]" :address="outcomeAddress"></OutcomeItem>
+              </li><br>
+              <br>
+              <br>
+            </ul>
+          </div>
+        </md-app-content>
+      </md-app>
+
   </div>
 </template>
 
 <script>
-import OutcomeToken from "@/js/outcometoken.js"
-import Voting from "@/js/voting.js"
-import OutcomeItem from "@/components/OutcomeItem.vue"
-import MakeOrder from "@/components/MakeOrder.vue"
-import GetWethBtn from "@/components/GetWethBtn.vue"
-import SetAllowance from "@/components/SetAllowance.vue"
-import OrderList from "@/components/OrderList.vue"
+import OutcomeToken from "@/js/outcometoken.js";
+import Voting from "@/js/voting.js";
+import OutcomeItem from "@/components/OutcomeItem.vue";
+import MakeOrder from "@/components/MakeOrder.vue";
+import GetWethBtn from "@/components/GetWethBtn.vue";
+import SetAllowance from "@/components/SetAllowance.vue";
+import OrderList from "@/components/OrderList.vue";
+
+var content = {
+  ORDER_LIST: 0,
+  MAKE_ORDER: 1,
+  ADD_OUTCOME: 2
+}
 
 export default {
   name: "dashboard",
@@ -46,14 +75,11 @@ export default {
       msg: "Outcome Token Test DApp",
       outcomes: {},
       outcomeName: "",
-      disabled: false,
-      backValue: undefined
+      backValue: undefined,
+      showMakeOrder: false,
+      showOrderList: false,
+      showAddOutcome: false
     };
-  },
-  computed: {
-    isDisabled() {
-      return this.disabled;
-    }
   },
   beforeCreate: function() {
     Voting.init();
@@ -72,27 +98,37 @@ export default {
       self.disabled = true;
       let voting = Voting.getVotingAddress();
 
-      OutcomeToken.deployNew(self.outcomeName, voting).then(function(address) {
-        self.outcomes[address] = self.outcomeName
-        self.outcomeName = "";
+      OutcomeToken.deployNew(self.outcomeName, voting).then(function() {
         self.disabled = false;
       });
     },
 
     addOrder: function() {
-      this.$refs.orderlist.updateList()
+      this.$refs.orderlist.updateList();
+    },
+
+    toggleContent: function(contentNbr) {
+      var self = this
+      self.showOrderList = false
+      self.showMakeOrder = false
+      self.showAddOutcome = false
+      switch (contentNbr) {
+        case content.ORDER_LIST:
+          self.showOrderList = true
+          break
+        case content.MAKE_ORDER:
+          self.showMakeOrder = true
+          break
+        case content.ADD_OUTCOME:
+          self.showAddOutcome = true
+      }
     }
   }
 };
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
-h1,
-h2 {
-  font-weight: normal;
-  display: block;
-}
+<style lang="scss" scoped>
 
 ul {
   list-style-type: none;
@@ -112,7 +148,6 @@ a {
   width: 150px;
   align-content: center;
   margin: auto;
-  
 }
 
 #title {
@@ -128,8 +163,13 @@ a {
   text-align: left;
 }
 
-#topContainer {
-  display: flex;
-  justify-content: center;
+.md-app {
+    min-height: 350px;
+    border: 1px solid rgba(#000, .12);
+}
+
+.md-drawer {
+    width: 230px;
+    max-width: calc(100vw - 125px);
 }
 </style>
