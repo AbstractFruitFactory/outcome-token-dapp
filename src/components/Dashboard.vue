@@ -26,7 +26,7 @@
             <OrderList :outcomeAddresses="outcomeAddresses" :outcomeNames="outcomeNames"></OrderList>
           </div>
           <div v-show="showOutcomeContent == true">
-            <OutcomeContent :outcomeAddresses="outcomeAddresses" :outcomeNames="outcomeNames" :outcomeAmounts="outcomeAmounts"></OutcomeContent>
+            <OutcomeContent v-on:update="updateOutcomes" :outcomeAddresses="outcomeAddresses" :outcomeNames="outcomeNames" :outcomeAmounts="outcomeAmounts"></OutcomeContent>
           </div>
           <div v-show="showWETHContent == true">
             <GetWethContent></GetWethContent>
