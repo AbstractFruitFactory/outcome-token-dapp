@@ -62,19 +62,28 @@ const OutcomeToken = {
     getName: function(address) {
         let self = this
         return new Promise((resolve, reject) => {
-            self.contract.at(address).getName().then(function(result) {
-                resolve(result)
+            self.contract.at(address).getName().then(function(name) {
+                resolve(name)
             }).catch(function() {
                 resolve(address)
             })
         })
     },
 
+    getAmount: function(address) {
+        let self = this
+        return new Promise((resolve, reject) => {
+            self.contract.at(address).balanceOf(window.web3.eth.coinbase).then(function(amount) {
+                resolve(amount)
+            })
+        })
+    },
+
     deployNew: function (name, voting) {
         let self = this
-    
+        
         return new Promise((resolve, reject) => {
-            self.contract.new(name, voting, { from: window.web3.eth.coinbase, gas: 2300000, gasPrice: 100000000000 }).then(function(instance) {
+            self.contract.new(name, voting, "0x58a1ee0008d4d1383ef94e287a31ea74ce8a9d67", { from: window.web3.eth.coinbase, gas: 8000000, gasPrice: 100000000000 }).then(function(instance) {
                 resolve(instance.address)
             })
         })
