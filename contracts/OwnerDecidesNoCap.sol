@@ -16,7 +16,7 @@ contract OwnerDecidesNoCap is IVotingMechanism {
     
     function vote(address _topic, Vote _vote) {
         OutcomeToken outcome = OutcomeToken(_topic);
-        require(msg.sender == outcome.owner());
+        require(outcome.isOwner(msg.sender) == true);
         require(_vote != Vote.UNKNOWN);
         require(voteStatus[_topic] == Vote.UNKNOWN);
         voteStatus[_topic] = _vote;

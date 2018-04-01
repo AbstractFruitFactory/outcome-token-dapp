@@ -64,8 +64,8 @@ contract OutcomeToken is StandardToken, Ownable {
         return name;
     }
 
-    function isOwner() view returns (bool) {
-        if (owner == msg.sender) {
+    function isOwner(address user) view returns (bool) {
+        if (owner == user) {
             return true;
         } else {
             return false;

@@ -25,6 +25,15 @@
       </md-field>
       <md-button class="md-raised md-primary" @click="back()">Submit</md-button>
     </md-dialog>
+
+    <md-dialog class="dialog" :md-active.sync="showRedeemDialog">
+      <md-dialog-title>Redeem Tokens</md-dialog-title>
+      Amount:
+      <md-field>
+        <md-input v-model="redeemValue"></md-input>
+      </md-field>
+      <md-button class="md-raised md-primary" @click="redeem()">Submit</md-button>
+    </md-dialog>
   
     
     <md-button class="md-raised md-primary" @click="showNewOutcomeDialog = true">New outcome</md-button>
@@ -36,6 +45,7 @@
           <md-table-head>Name</md-table-head>
           <md-table-head>Amount</md-table-head>
           <md-table-head>Enabled</md-table-head>
+          <md-table-head>Vote Status</md-table-head>
         </md-table-row>
   
         <md-table-row v-for="(address, i) in outcomeAddresses" :key="address">
@@ -44,9 +54,17 @@
           <md-table-cell>
             <md-switch v-model="switchStatus" @change="enableOutcome(address)"></md-switch>
           </md-table-cell>
+          <md-table-cell>{{ voteStatus[address] }}</md-table-cell>
           <md-table-cell>
-            <md-button class="md-raised md-primary" id="BackBtn" @click="showBackDialogFunc(address)">Back outcome</md-button>
+            <md-button class="md-raised md-primary" id="BackBtn" @click="showBackDialogFunc(address)">Back</md-button>
           </md-table-cell>
+          <md-table-cell>
+            <md-button class="md-raised md-primary" id="RedeemBtn" @click="showRedeemDialogFunc(address)">Redeem</md-button>
+          </md-table-cell>
+          <md-table-cell>
+             <md-button class="md-raised md-primary" id="VoteBtn" @click="showVoteDialogFunc(address)">Vote</md-button>
+          </md-table-cell>
+          
         </md-table-row>
       </md-table>
     </div>
@@ -64,7 +82,7 @@ import * as Web3ProviderEngine from "web3-provider-engine";
 import { InjectedWeb3Subprovider } from "@0xproject/subproviders";
 import * as RPCSubprovider from "web3-provider-engine/subproviders/rpc";
 import { Web3Wrapper } from "@0xproject/web3-wrapper";
-import OutcomeList from "@/js/outcomelist.js"
+import OutcomeList from "@/js/outcomelist.js";
 
 var providerEngine = new Web3ProviderEngine();
 providerEngine.addProvider(
@@ -90,13 +108,37 @@ export default {
       showBackDialog: false,
       switchStatus: undefined,
       Vote: {
-          UNKNOWN: 0,
-          MET: 1,
-          NOT_MET: 2
+        UNKNOWN: 0,
+        MET: 1,
+        NOT_MET: 2
       },
       showVoteDialog: false,
       selectedVote: undefined,
+      redeemValue: undefined,
+      showRedeemDialog: false,
+      voteStatus: {}
     };
+  },
+
+  watch: {
+    outcomeAddresses: function() {
+      let self = this;
+      self.outcomeAddresses.map(async address => {
+        let vote = await Voting.getVoteStatus(address);
+        vote = vote.c[0] // Convert from BigNumber to number.
+        switch (vote) {
+          case self.Vote.MET:
+            self.voteStatus[address] = "Met";
+            break;
+          case self.Vote.NOT_MET:
+            self.voteStatus[address] = "Not met";
+            break;
+          default:
+            self.voteStatus[address] = "-";
+            break;
+        }
+      });
+    }
   },
 
   props: ["outcomeAddresses", "outcomeNames", "outcomeAmounts"],
@@ -107,9 +149,10 @@ export default {
       self.disabled = true;
       let voting = Voting.getVotingAddress();
 
-      OutcomeToken.deployNew(self.outcomeName, voting).then(function() {
-        self.$emit("update")
-      })
+      OutcomeToken.deployNew(self.outcomeName, voting).then(function(address) {
+        self.voteStatus[address] = "-";
+        self.$emit("update");
+      });
     },
 
     back: function() {
@@ -117,7 +160,44 @@ export default {
       OutcomeToken.back(self.selectedOutcomeAddress, self.backValue).then(
         function() {
           self.showBackDialog = false;
-          self.$emit("update")
+          self.$emit("update");
+        }
+      );
+    },
+
+    redeem: async function() {
+      let self = this;
+      let address = self.selectedOutcomeAddress;
+      let voteStatus = await Voting.getVoteStatus(address);
+      let isOwner = await OutcomeToken.isOwner(address);
+
+      if (voteStatus == self.Vote.NOT_MET && isOwner) {
+        OutcomeToken.redeemBackerToken(address, self.redeemValue).then(
+          function() {
+            self.showRedeemDialog = false;
+          }
+        );
+      } else if (voteStatus == self.Vote.MET) {
+        OutcomeToken.redeemRewardToken(address, self.redeemValue).then(
+          function() {
+            self.showRedeemDialog = false;
+          }
+        );
+      } else {
+        console.log("Invalid action.");
+      }
+    },
+
+    vote: function() {
+      let self = this;
+      Voting.vote(self.selectedOutcomeAddress, self.selectedVote).then(
+        function() {
+          if (self.selectedVote == self.Vote.MET) {
+            self.voteStatus[self.selectedOutcomeAddress] = "Met";
+          } else if (self.selectedVote == self.Vote.NOT_MET) {
+            self.voteStatus[self.selectedOutcomeAddress] = "Not met";
+          }
+          self.showVoteDialog = false;
         }
       );
     },
@@ -128,9 +208,20 @@ export default {
         window.web3.eth.coinbase
       );
     },
+
     showBackDialogFunc: function(address) {
-      this.showBackDialog = true
-      this.selectedOutcomeAddress = address
+      this.showBackDialog = true;
+      this.selectedOutcomeAddress = address;
+    },
+
+    showRedeemDialogFunc: function(address) {
+      this.showRedeemDialog = true;
+      this.selectedOutcomeAddress = address;
+    },
+
+    showVoteDialogFunc: function(address) {
+      this.showVoteDialog = true;
+      this.selectedOutcomeAddress = address;
     }
   }
 };
@@ -139,7 +230,7 @@ export default {
 
 <style lang="scss" scoped>
 #outcomeList {
-  width: 500px;
+  width: 1000px;
   max-width: 100%;
   vertical-align: top;
   border: 1px solid rgba(#000, 0.12);
