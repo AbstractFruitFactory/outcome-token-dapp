@@ -36,7 +36,7 @@
     </md-dialog>
   
     
-    <md-button class="md-raised md-primary" @click="showNewOutcomeDialog = true">New outcome</md-button>
+    <md-button id="newOutcomeBtn" class="md-raised md-primary" @click="showNewOutcomeDialog = true">New outcome</md-button>
   
     <div id="outcomeList">
       <h3>Outcomes:</h3>
@@ -229,10 +229,16 @@ export default {
 
 <style lang="scss" scoped>
 #outcomeList {
+  display: block;
+  margin: auto;
   width: 1000px;
-  max-width: 100%;
-  vertical-align: top;
   border: 1px solid rgba(#000, 0.12);
+}
+
+#newOutcomeBtn {
+  margin: auto;
+  margin-bottom: 30px;
+  display: block;
 }
 
 .dialog {
