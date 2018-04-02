@@ -68,7 +68,6 @@
         </md-table-row>
       </md-table>
     </div>
-  
   </div>
 </template>
 

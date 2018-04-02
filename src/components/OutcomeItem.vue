@@ -88,7 +88,7 @@
       redeem: async function() {
         let self = this;
         let voteStatus = await Voting.getVoteStatus(this.address);
-        let isOwner = await OutcomeToken.isOwner(this.address);
+        let isOwner = await OutcomeToken.isOwner();
   
         if (voteStatus == self.Vote.NOT_MET && isOwner) {
           OutcomeToken.redeemBackerToken(this.address, self.redeemValue).then(function() {
