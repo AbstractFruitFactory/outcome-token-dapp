@@ -9,13 +9,8 @@ const OutcomeList = {
         return new Promise(function (resolve, reject) {
             self.contract = contract(OutcomeListContract)
             self.contract.setProvider(window.web3.currentProvider)
-        
-            self.contract.deployed().then(instance => {
-                self.instance = instance
-                resolve()
-            }).catch(err => {
-                reject(err)
-            })
+            self.instance = self.contract.at("0x1e528859d160b4467a0963a2422037fa19087d02")
+            resolve()
         })
     },
 

@@ -18,20 +18,13 @@ const Voting = {
             self.contract = contract(VotingContract)
             self.contract.setProvider(window.web3.currentProvider)
         
-            self.contract.deployed().then(instance => {
-                self.instance = instance
-                resolve()
-            }).catch(err => {
-                reject(err)
-            })
+            self.instance = self.contract.at("0x528fa486b6f3af98cfc88c113a1857cfda9f9298")
         })
     },
 
     vote: function (address, vote) {
         let self = this
         return new Promise((resolve, reject) => {
-            console.log(address)
-            console.log(vote)
             self.instance.vote(address, vote, { from: window.web3.eth.coinbase }).then(function() {
                 resolve()
             })

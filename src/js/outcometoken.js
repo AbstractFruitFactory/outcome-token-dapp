@@ -83,7 +83,7 @@ const OutcomeToken = {
         let self = this
         
         return new Promise((resolve, reject) => {
-            self.contract.new(name, voting, "0x1ad3357409640bd658283eac17face5c668a7a99", { from: window.web3.eth.coinbase, gas: 4400000, gasPrice: 100000000000 }).then(function(instance) {
+            self.contract.new(name, voting, "0x1e528859d160b4467a0963a2422037fa19087d02", { from: window.web3.eth.coinbase, gas: 4400000, gasPrice: 100000000000 }).then(function(instance) {
                 resolve(instance.address)
             })
         })

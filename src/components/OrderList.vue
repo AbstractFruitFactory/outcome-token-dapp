@@ -134,6 +134,10 @@ export default {
 <style>
 #orderList {
   display: inline-block;
-  width: 30%;
+  width: 100%;
+}
+
+.dialog {
+  padding: 30px;
 }
 </style>
