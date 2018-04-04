@@ -136,6 +136,7 @@ export default {
             self.voteStatus[address] = "-";
             break;
         }
+        self.voteStatus = Object.assign({}, self.voteStatus);
       });
     }
   },
