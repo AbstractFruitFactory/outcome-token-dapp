@@ -30,6 +30,7 @@
     "vue": "2.5.13",
     "vue-material": "^1.0.0-beta-8",
     "vue-router": "^2.7.0",
+    "vuetify": "^1.0.13",
     "web3": "^0.20.0",
     "web3-provider-engine": "^13.6.6",
     "zeppelin-solidity": "^1.7.0"

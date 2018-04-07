@@ -1,40 +1,61 @@
 <template>
-  <div class="dashboard">
-      <md-app>
-        <md-app-toolbar class="md-primary">
-          <span class="md-title">Outcome Token Test DApp</span>
-        </md-app-toolbar>
-
-        <md-app-drawer md-permanent="clipped">
-          <md-list>
-            <md-list-item @click="toggleContent(0)">
-              <md-icon>move_to_inbox</md-icon>
-              <span class="md-list-item-text">Orders</span>
-            </md-list-item>
-            <md-list-item @click="toggleContent(2)">
-              <md-icon>move_to_inbox</md-icon>
-              <span class="md-list-item-text">Outcomes</span>
-            </md-list-item>
-            <md-list-item @click="toggleContent(3)">
-              <md-icon>move_to_inbox</md-icon>
-              <span class="md-list-item-text">Get WETH</span>
-            </md-list-item>
-          </md-list>
-        </md-app-drawer>
-        <md-app-content>
-          <div v-show="showOrderList == true" >
-            <OrderList :outcomeAddresses="outcomeAddresses" :outcomeNames="outcomeNames"></OrderList>
-          </div>
-          <div v-show="showOutcomeContent == true">
-            <OutcomeContent v-on:update="updateOutcomes" :outcomeAddresses="outcomeAddresses" :outcomeNames="outcomeNames" :outcomeAmounts="outcomeAmounts"></OutcomeContent>
-          </div>
-          <div v-show="showWETHContent == true">
-            <GetWethContent></GetWethContent>
-          </div>
-        </md-app-content>
-      </md-app>
-
-  </div>
+    <v-app id="app" dark>
+        <v-navigation-drawer fixed clipped>
+          <v-toolbar flat>
+            <v-list>
+              <v-list-tile>
+                <v-list-tile-title class="title">
+                  Outcome Trading Platform
+                </v-list-tile-title>
+              </v-list-tile>
+             </v-list>
+          </v-toolbar>
+          <v-divider></v-divider>
+          <v-list dense class="pt-0">
+              <v-list-tile @click="toggleContent(0)">
+                <v-list-tile-action>
+                  <v-icon>dashboard</v-icon>
+                </v-list-tile-action>
+                <v-list-tile-content>
+                  <v-list-tile-title>Orders</v-list-tile-title>
+                </v-list-tile-content>
+              </v-list-tile>
+              <v-list-tile @click="toggleContent(2)">
+                <v-list-tile-action>
+                  <v-icon>dashboard</v-icon>
+                </v-list-tile-action>
+                <v-list-tile-content>
+                  <v-list-tile-title>Outcomes</v-list-tile-title>
+                </v-list-tile-content>
+              </v-list-tile>
+              <v-list-tile @click="toggleContent(3)">
+                <v-list-tile-action>
+                  <v-icon>dashboard</v-icon>
+                </v-list-tile-action>
+                <v-list-tile-content>
+                  <v-list-tile-title>Get WETH</v-list-tile-title>
+                </v-list-tile-content>
+              </v-list-tile>
+            </v-list>
+        </v-navigation-drawer>
+        <v-content>
+        <v-container fill-height>
+          <v-layout justify-center>
+            <v-flex shrink>
+              <div v-show="showOrderList == true" >
+              <OrderList :outcomeAddresses="outcomeAddresses" :outcomeNames="outcomeNames"></OrderList>
+            </div>
+            <div v-show="showOutcomeContent == true">
+              <OutcomeContent v-on:update="updateOutcomes" :items="items" :outcomeAddresses="outcomeAddresses" :outcomeNames="outcomeNames" :outcomeAmounts="outcomeAmounts"></OutcomeContent>
+            </div>
+            <div v-show="showWETHContent == true">
+              <GetWethContent></GetWethContent>
+            </div>
+            </v-flex>
+          </v-layout>
+        </v-container>
+        </v-content>
+    </v-app>
 </template>
 
 <script>
@@ -45,14 +66,34 @@ import GetWethContent from "@/components/GetWethContent.vue";
 import SetAllowance from "@/components/SetAllowance.vue";
 import OrderList from "@/components/OrderList.vue";
 import OutcomeContent from "@/components/OutcomeContent.vue";
-import OutcomeList from "@/js/outcomelist.js"
+import OutcomeList from "@/js/outcomelist.js";
+import { ZeroExError } from '0x.js/lib/src/types';
+import * as Web3ProviderEngine from "web3-provider-engine";
+import { InjectedWeb3Subprovider } from "@0xproject/subproviders";
+import * as RPCSubprovider from "web3-provider-engine/subproviders/rpc";
+import { Web3Wrapper } from "@0xproject/web3-wrapper";
+import { ZeroEx } from "0x.js";
 var content = {
   ORDER_LIST: 0,
   MAKE_ORDER: 1,
   ADD_OUTCOME: 2,
   GET_WETH: 3
 };
+var voting = ["-", "Met", "Not met"]
 
+var providerEngine = new Web3ProviderEngine();
+providerEngine.addProvider(
+  new InjectedWeb3Subprovider(window.web3.currentProvider)
+);
+providerEngine.addProvider(
+  new RPCSubprovider({
+    rpcUrl: "https://ropsten.infura.io"
+  })
+);
+providerEngine.start();
+var zeroEx = new ZeroEx(providerEngine, {
+  networkId: 3
+});
 export default {
   name: "dashboard",
   data() {
@@ -66,16 +107,17 @@ export default {
       showWETHContent: false,
       outcomeAddresses: undefined,
       outcomeNames: undefined,
-      outcomeAmounts: undefined
+      outcomeAmounts: undefined,
+      items: []
     };
   },
   beforeCreate: function() {
-    let self = this
+    let self = this;
     Voting.init();
     OutcomeToken.init();
     OutcomeList.init().then(function() {
       self.updateOutcomes();
-    })
+    });
   },
   components: {
     OutcomeItem,
@@ -112,21 +154,23 @@ export default {
       self.outcomeAddresses = await OutcomeList.getOutcomeAddresses();
       self.outcomeNames = [];
       self.outcomeAmounts = [];
-      self.outcomeAddresses.map((address, i) => {
-        OutcomeToken.getName(address).then(function(name) {
-          self.$set(self.outcomeNames, i, name);
-        });
-        OutcomeToken.getAmount(address).then(function(amount) {
-          self.$set(self.outcomeAmounts, i, amount);
-        });
-      })
+      self.outcomeAddresses.map(async (address, i) => {
+        let name = await OutcomeToken.getName(address)
+        let amount = await OutcomeToken.getAmount(address)
+        let vote = await Voting.getVoteStatus(address)
+        let allowance = await zeroEx.token.getProxyAllowanceAsync(address, window.web3.eth.coinbase)
+        let enabled = (allowance > 0) ? true : false;
+        self.$set(self.outcomeNames, i, name);
+        self.$set(self.outcomeAmounts, i, amount);
+        self.$set(self.items, i, { name: name, amount: amount, vote: voting[vote], enabled: enabled, address: address })
+      });
     }
   }
 };
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
-<style lang="scss" scoped>
+<style>
 ul {
   list-style-type: none;
   padding: 0;
@@ -158,11 +202,6 @@ a {
 .inline-block-center div {
   display: inline-block;
   text-align: left;
-}
-
-.md-app {
-  min-height: 350px;
-  border: 1px solid rgba(#000, 0.12);
 }
 
 .md-drawer {

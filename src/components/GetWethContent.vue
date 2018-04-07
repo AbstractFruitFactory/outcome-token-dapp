@@ -1,15 +1,8 @@
 
 <template>
     <div>
-        <md-dialog class="dialog" :md-active.sync="showDialog">
-            <md-dialog-title>Get WETH</md-dialog-title>
-            <md-field>
-                <label>Amount</label>
-                <md-input v-model="amount"></md-input>
-            </md-field>
-            <md-button class="md-raised md-primary" @click="getWETH()">Submit</md-button>
-        </md-dialog>
-        <md-button class="md-raised md-primary" v-on:click="showDialog = true">Get WETH</md-button>
+        <v-text-field label="Amount" v-model="amount"></v-text-field>
+        <v-btn @click="getWETH()">Get WETH</v-btn>
     </div>
 </template>
 

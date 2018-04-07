@@ -15,8 +15,8 @@ const OutcomeToken = {
     back: function (address, _value) {
         let self = this
         return new Promise((resolve, reject) => {
-            self.contract.at(address).back({ from: window.web3.eth.coinbase, value: web3.toWei(_value, "ether"), gas: 2300000}).then(function() {
-                resolve()
+            self.contract.at(address).back.sendTransaction({ from: window.web3.eth.coinbase, value: web3.toWei(_value, "ether"), gas: 2300000}).then(function(hash) {
+                resolve(hash)
             })
         })
     },
@@ -35,8 +35,8 @@ const OutcomeToken = {
         
         return new Promise((resolve, reject) => {
             console.log("backer token")
-            self.contract.at(address).redeemBackerTokens(web3.toWei(value, "ether"), { from: window.web3.eth.coinbase , gas: 2300000}).then(function() {
-                resolve()
+            self.contract.at(address).redeemBackerTokens.sendTransaction(web3.toWei(value, "ether"), { from: window.web3.eth.coinbase , gas: 2300000}).then(function(hash) {
+                resolve(hash)
             })
         })
     },

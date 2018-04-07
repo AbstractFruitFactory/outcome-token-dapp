@@ -22,6 +22,16 @@
                 </md-list-item>
             </md-list>
         </md-field>
+
+        <v-data-table
+        :headers="headers"
+        :items="items"
+        :loading="isLoading"
+        hide-actions
+        class="elevation-1"
+        >
+          
+        </v-data-table>
     </div>
 </template>
 

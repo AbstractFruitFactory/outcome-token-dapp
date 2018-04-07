@@ -1,72 +1,83 @@
 <template>
   <div>
-    <md-dialog class="dialog" :md-active.sync="showNewOutcomeDialog">
-      <md-dialog-title>Create new outcome</md-dialog-title>
-      Name:
-      <md-field>
-        <md-input v-model="outcomeName"></md-input>
-      </md-field>
-      <md-button class="md-raised md-primary" @click="addOutcomeToken()">Submit</md-button>
-    </md-dialog>
+    <v-dialog max-width="500px" v-model="showNewOutcomeDialog">
+      <v-card>
+        <v-card-title>
+          Create new outcome
+        </v-card-title>
+        <v-card-text>
+          <v-text-field label="Name" v-model="outcomeName"></v-text-field>
+          <v-btn @click="addOutcomeToken()">Submit</v-btn>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
 
-    <md-dialog class="dialog" :md-active.sync="showVoteDialog">
-      <md-dialog-title>Vote For Outcome</md-dialog-title>
-  
-      <md-radio name="vote" v-model="selectedVote" v-bind:value="Vote.MET">Met</md-radio>
-      <md-radio name="vote" v-model="selectedVote" v-bind:value="Vote.NOT_MET">Not met</md-radio>
-      <md-button class="md-raised md-primary" @click="vote()">Submit</md-button>
-    </md-dialog>
+    <v-dialog max-width="500px" v-model="showBackDialog">
+      <v-card>
+        <v-card-title>
+          Back Outcome
+        </v-card-title>
+        <v-card-text>
+          <v-text-field label="Amount" v-model="backValue"></v-text-field>
+          <v-btn @click="back()">Submit</v-btn>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
 
-    <md-dialog class="dialog" :md-active.sync="showBackDialog">
-      <md-dialog-title>Back outcome</md-dialog-title>
-      Amount:
-      <md-field>
-        <md-input v-model="backValue"></md-input>
-      </md-field>
-      <md-button class="md-raised md-primary" @click="back()">Submit</md-button>
-    </md-dialog>
+    <v-dialog max-width="500px" v-model="showRedeemDialog">
+      <v-card>
+        <v-card-title>
+          Redeem tokens
+        </v-card-title>
+        <v-card-text>
+          <v-text-field label="Amount" v-model="redeemValue"></v-text-field>
+          <v-btn @click="redeem()">Submit</v-btn>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
 
-    <md-dialog class="dialog" :md-active.sync="showRedeemDialog">
-      <md-dialog-title>Redeem Tokens</md-dialog-title>
-      Amount:
-      <md-field>
-        <md-input v-model="redeemValue"></md-input>
-      </md-field>
-      <md-button class="md-raised md-primary" @click="redeem()">Submit</md-button>
-    </md-dialog>
-  
-    
-    <md-button id="newOutcomeBtn" class="md-raised md-primary" @click="showNewOutcomeDialog = true">New outcome</md-button>
+    <v-dialog max-width="500px" v-model="showVoteDialog">
+      <v-card>
+        <v-card-title>
+          Vote on outcome
+        </v-card-title>
+        <v-card-text>
+          <v-radio-group v-model="selectedVote">
+            <v-radio
+              v-for="vote in Vote"
+              :key="vote"
+              :label="nbrToVote(vote)"
+              :value="vote">
+            </v-radio>
+          </v-radio-group>
+          <v-btn @click="vote()">Submit</v-btn>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+
+
+    <v-btn id="newOutcomeBtn" class="md-raised md-primary" @click="showNewOutcomeDialog = true">New outcome</v-btn>
   
     <div id="outcomeList">
-      <h3>Outcomes:</h3>
-      <md-table>
-        <md-table-row>
-          <md-table-head>Name</md-table-head>
-          <md-table-head>Amount</md-table-head>
-          <md-table-head>Enabled</md-table-head>
-          <md-table-head>Vote Status</md-table-head>
-        </md-table-row>
-  
-        <md-table-row v-for="(address, i) in outcomeAddresses" :key="address">
-          <md-table-cell>{{ outcomeNames[i] }}</md-table-cell>
-          <md-table-cell>{{ outcomeAmounts[i]/10**18 }}</md-table-cell>
-          <md-table-cell>
-            <md-switch v-model="switchStatus" @change="enableOutcome(address)"></md-switch>
-          </md-table-cell>
-          <md-table-cell>{{ voteStatus[address] }}</md-table-cell>
-          <md-table-cell>
-            <md-button class="md-raised md-primary" id="BackBtn" @click="showBackDialogFunc(address)">Back</md-button>
-          </md-table-cell>
-          <md-table-cell>
-            <md-button class="md-raised md-primary" id="RedeemBtn" @click="showRedeemDialogFunc(address)">Redeem</md-button>
-          </md-table-cell>
-          <md-table-cell>
-             <md-button class="md-raised md-primary" id="VoteBtn" @click="showVoteDialogFunc(address)">Vote</md-button>
-          </md-table-cell>
-          
-        </md-table-row>
-      </md-table>
+      <h3>Outcomes</h3>
+      <v-data-table
+        :headers="headers"
+        :items="items"
+        :loading="isLoading"
+        hide-actions
+        class="elevation-1"
+      >
+        <v-progress-linear slot="progress" color="blue" indeterminate></v-progress-linear>
+        <template slot="items" slot-scope="props">
+          <td class="text-xs-left">{{ props.item.name }}</td>
+          <td class="text-xs-left">{{ parseInt(props.item.amount) }}</td>
+          <td class="text-xs-left">{{ props.item.vote }}</td>
+          <td class="text-xs-left"><v-switch v-model="props.item.enabled" @click="setEnabled(props.item.address, props.item.enabled)"></v-switch></td>
+          <td class="text-xs-left"><v-btn @click="showBackDialogFunc(props.item.address)">Back</v-btn></td>
+          <td class="text-xs-left"><v-btn @click="showRedeemDialogFunc(props.item.address)">Redeem</v-btn></td>
+          <td class="text-xs-left"><v-btn @click="showVoteDialogFunc(props.item.address)">Vote</v-btn></td>
+        </template>
+      </v-data-table>
     </div>
   </div>
 </template>
@@ -105,9 +116,8 @@ export default {
       selectedOutcomeAddress: undefined,
       backValue: undefined,
       showBackDialog: false,
-      switchStatus: undefined,
+      switchStatus: [],
       Vote: {
-        UNKNOWN: 0,
         MET: 1,
         NOT_MET: 2
       },
@@ -115,7 +125,39 @@ export default {
       selectedVote: undefined,
       redeemValue: undefined,
       showRedeemDialog: false,
-      voteStatus: {}
+      voteStatus: {},
+      isLoading: false,
+      headers: [
+        {
+          sortable: false,
+          text: "Name"
+        },
+        {
+          sortable: false,
+          text: "Amount"
+        },
+        {
+          sortable: false,
+          text: "Vote status"
+        },
+        {
+          sortable: false,
+          text: "Enabled"
+        },
+        {
+          sortable: false,
+          text: ""
+        },
+        {
+          sortable: false,
+          text: ""
+        },
+        {
+          sortable: false,
+          text: ""
+        }
+      ],
+      items: []
     };
   },
 
@@ -138,17 +180,21 @@ export default {
         }
         self.voteStatus = Object.assign({}, self.voteStatus);
       });
+    },
+
+    items: function(items) {
+      this.items = items
+      console.log(this.items)
     }
   },
 
-  props: ["outcomeAddresses", "outcomeNames", "outcomeAmounts"],
+  props: ["outcomeAddresses", "items"],
 
   methods: {
     addOutcomeToken: function() {
       let self = this;
       self.disabled = true;
       let voting = Voting.getVotingAddress();
-
       OutcomeToken.deployNew(self.outcomeName, voting).then(function(address) {
         self.voteStatus[address] = "-";
         self.$emit("update");
@@ -158,9 +204,14 @@ export default {
     back: function() {
       let self = this;
       OutcomeToken.back(self.selectedOutcomeAddress, self.backValue).then(
-        function() {
+        function(hash) {
           self.showBackDialog = false;
-          self.$emit("update");
+          self.isLoading = true
+          self.waitForReceipt(hash, function(receipt) {
+            self.isLoading = false;
+            self.$emit("update");
+          })
+         
         }
       );
     },
@@ -171,16 +222,14 @@ export default {
       let voteStatus = await Voting.getVoteStatus(address);
       let isOwner = await OutcomeToken.isOwner(address);
 
-      if (voteStatus == self.Vote.NOT_MET && isOwner) {
+      if ((voteStatus == self.Vote.NOT_MET && isOwner) || (voteStatus == self.Vote.MET && !isOwner)) {
         OutcomeToken.redeemBackerToken(address, self.redeemValue).then(
-          function() {
+          function(hash) {
+            self.isLoading = true
             self.showRedeemDialog = false;
-          }
-        );
-      } else if (voteStatus == self.Vote.MET) {
-        OutcomeToken.redeemRewardToken(address, self.redeemValue).then(
-          function() {
-            self.showRedeemDialog = false;
+            self.waitForReceipt(hash, function(receipt) {
+              self.isLoading = false;
+            })
           }
         );
       } else {
@@ -191,22 +240,68 @@ export default {
     vote: function() {
       let self = this;
       Voting.vote(self.selectedOutcomeAddress, self.selectedVote).then(
-        function() {
-          if (self.selectedVote == self.Vote.MET) {
-            self.voteStatus[self.selectedOutcomeAddress] = "Met";
-          } else if (self.selectedVote == self.Vote.NOT_MET) {
-            self.voteStatus[self.selectedOutcomeAddress] = "Not met";
-          }
+        function(hash) {
+          self.isLoading = true;
           self.showVoteDialog = false;
+          self.waitForReceipt(hash, function(receipt) {
+            self.isLoading = false;
+            self.$emit("update");
+          })
         }
       );
     },
 
-    enableOutcome: function(address) {
-      const setAllowTxHash = zeroEx.token.setUnlimitedProxyAllowanceAsync(
-        address,
-        window.web3.eth.coinbase
-      );
+    setEnabled: function(address, enabled) {
+      if(!enabled) {
+        const setAllowTxHash = zeroEx.token.setUnlimitedProxyAllowanceAsync(
+          address,
+          window.web3.eth.coinbase
+        );
+      } else {
+        const setAllowTxHash = zeroEx.token.setProxyAllowanceAsync(
+          address,
+          window.web3.eth.coinbase,
+          new BigNumber(0)
+        );
+      }
+    },
+
+    nbrToVote: function(nbr) {
+        switch(nbr) {
+          case 0:
+            return "-"
+            break;
+          case 1:
+            return "Met"
+            break;
+          case 2:
+            return "Not met"
+            break;
+          default:
+            return "ERROR: INVALID NBR"
+        }
+    },
+    
+    waitForReceipt: function(hash, cb) {
+      let self = this
+      web3.eth.getTransactionReceipt(hash, function (err, receipt) {
+        console.log(hash)
+        if (err) {
+          error(err);
+        }
+
+        if (receipt !== null) {
+          // Transaction went through
+          if (cb) {
+            cb(receipt);
+          }
+        } else {
+          // Try again in 1 second
+          window.setTimeout(function () {
+            self.waitForReceipt(hash, cb);
+          }, 1000);
+        }
+      });
     },
 
     showBackDialogFunc: function(address) {

@@ -25,8 +25,8 @@ const Voting = {
     vote: function (address, vote) {
         let self = this
         return new Promise((resolve, reject) => {
-            self.instance.vote(address, vote, { from: window.web3.eth.coinbase }).then(function() {
-                resolve()
+            self.instance.vote.sendTransaction(address, vote, { from: window.web3.eth.coinbase }).then(function(hash) {
+                resolve(hash)
             })
         })
     },
