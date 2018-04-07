@@ -1,44 +1,37 @@
 
 <template>
     <div>
-        <md-dialog class="dialog" :md-active.sync="showDialog">
-            <md-dialog-title>Make Order</md-dialog-title>
-    
-            <h3>Maker outcome token:</h3>
-            <div class="md-layout-item">
-                <md-field>
-                    <label for="Outcome Token">Outcome Token</label>
-                    <md-select v-model="makerTokenAddress" name="Outcome token">
-                        <div v-for="(address,i) in outcomeAddresses" :key="address">
-                            <md-option :value="address">{{ outcomeNames[i] }}</md-option>
-                        </div>
-                    </md-select>
-                </md-field>
-            </div>
-            <md-field>
-                <label>Amount</label>
-                <md-input v-model="makerTokenAmount"></md-input>
-            </md-field>
-            <h3>Taker outcome token:</h3>
-            <div class="md-layout-item">
-                <md-field>
-                    <label for="Outcome Token">Outcome Token</label>
-                    <md-select v-model="takerTokenAddress" name="Outcome token">
-                        <div v-for="(address, i) in outcomeAddresses" :key="address">
-                            <md-option :value="address">{{ outcomeNames[i] }}</md-option>
-                        </div>
-                    </md-select>
-                </md-field>
-            </div>
-            <md-field>
-                <label>Amount</label>
-                <md-input v-model="takerTokenAmount"></md-input>
-            </md-field>
-    
-    
-            <md-button class="md-raised md-primary" @click="makeOrder()">Submit</md-button>
-        </md-dialog>
-        <md-button class="md-raised md-primary" @click="showDialog = true">Make Order</md-button>
+        <v-dialog max-width="500px" v-model="showDialog">
+            <v-card>
+              <v-card-title>
+                Make order
+              </v-card-title>
+              <v-card-text>
+                <v-flex xs6>
+                  <v-select
+                    :items="makerTokens"
+                    v-model="makerTokenAddress"
+                    label="Select maker token"
+                    class="input-group--focused"
+                    item-value="value"
+                  ></v-select>
+                  <v-text-field label="Maker token amount" v-model="makerTokenAmount"></v-text-field>
+                </v-flex>
+                <v-flex xs6>
+                  <v-select
+                    :items="takerTokens"
+                    v-model="takerTokenAddress"
+                    label="Select maker token"
+                    class="input-group--focused"
+                    item-value="value"
+                  ></v-select>
+                  <v-text-field label="Taker token amount" v-model="takerTokenAmount"></v-text-field>
+                </v-flex>
+                <v-btn @click="makeOrder()">Submit</v-btn>
+              </v-card-text>
+            </v-card>
+        </v-dialog>
+        <v-btn @click="showDialog = true">Make Order</v-btn>
     </div>
 </template>
 
@@ -78,6 +71,8 @@ export default {
       takerTokenAmount: undefined,
       signedOrder: undefined,
       showDialog: false,
+      makerTokens: [],
+      takerTokens: []
     };
   },
 
@@ -85,7 +80,17 @@ export default {
     this.exchangeAddress = Addresses.EXCHANGE_ADDRESS;
   },
 
-  props: ["outcomeAddresses", "outcomeNames"],
+  watch: {
+    outcomes: function(outcomes) {
+      let self = this
+      outcomes.map((outcome, i) => {
+        self.$set(self.makerTokens, i, { text: outcome.name, value: outcome.address })
+        self.$set(self.takerTokens, i, { text: outcome.name, value: outcome.address })
+      })
+    }
+  },
+
+  props: ["outcomeAddresses", "outcomes"],
 
   methods: {
     makeOrder: async function() {
@@ -151,13 +156,3 @@ export default {
   }
 };
 </script>
-
-<style>
-.md-menu-content {
-  z-index: 99999 !important;
-}
-
-.dialog {
-  padding: 30px;
-}
-</style>

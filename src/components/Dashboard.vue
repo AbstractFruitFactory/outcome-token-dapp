@@ -5,7 +5,7 @@
             <v-list>
               <v-list-tile>
                 <v-list-tile-title class="title">
-                  Outcome Trading Platform
+                  Outcome Trading Interface
                 </v-list-tile-title>
               </v-list-tile>
              </v-list>
@@ -43,14 +43,14 @@
           <v-layout justify-center>
             <v-flex shrink>
               <div v-show="showOrderList == true" >
-              <OrderList :outcomeAddresses="outcomeAddresses" :outcomeNames="outcomeNames"></OrderList>
-            </div>
-            <div v-show="showOutcomeContent == true">
-              <OutcomeContent v-on:update="updateOutcomes" :items="items" :outcomeAddresses="outcomeAddresses" :outcomeNames="outcomeNames" :outcomeAmounts="outcomeAmounts"></OutcomeContent>
-            </div>
-            <div v-show="showWETHContent == true">
-              <GetWethContent></GetWethContent>
-            </div>
+                <OrderList :outcomeAddresses="outcomeAddresses" :outcomes="outcomes"></OrderList>
+              </div>
+              <div v-show="showOutcomeContent == true">
+                <OutcomeContent v-on:update="updateOutcomes" :outcomes="outcomes" :outcomeAddresses="outcomeAddresses"></OutcomeContent>
+              </div>
+              <div v-show="showWETHContent == true">
+                <GetWethContent></GetWethContent>
+              </div>
             </v-flex>
           </v-layout>
         </v-container>
@@ -108,7 +108,7 @@ export default {
       outcomeAddresses: undefined,
       outcomeNames: undefined,
       outcomeAmounts: undefined,
-      items: []
+      outcomes: []
     };
   },
   beforeCreate: function() {
@@ -160,52 +160,9 @@ export default {
         let vote = await Voting.getVoteStatus(address)
         let allowance = await zeroEx.token.getProxyAllowanceAsync(address, window.web3.eth.coinbase)
         let enabled = (allowance > 0) ? true : false;
-        self.$set(self.outcomeNames, i, name);
-        self.$set(self.outcomeAmounts, i, amount);
-        self.$set(self.items, i, { name: name, amount: amount, vote: voting[vote], enabled: enabled, address: address })
+        self.$set(self.outcomes, i, { name: name, amount: amount, vote: voting[vote], enabled: enabled, address: address })
       });
     }
   }
 };
 </script>
-
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style>
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-li {
-  margin: 0 10px;
-  padding: 5px;
-}
-
-a {
-  color: #42b983;
-}
-
-#addOutcomeInput {
-  width: 150px;
-  align-content: center;
-  margin: auto;
-}
-
-#title {
-  padding-bottom: 5%;
-  font-size: 120%;
-}
-
-.inline-block-center {
-  text-align: center;
-}
-.inline-block-center div {
-  display: inline-block;
-  text-align: left;
-}
-
-.md-drawer {
-  width: 230px;
-  max-width: calc(100vw - 125px);
-}
-</style>

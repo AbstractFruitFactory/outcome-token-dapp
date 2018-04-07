@@ -56,13 +56,13 @@
     </v-dialog>
 
 
-    <v-btn id="newOutcomeBtn" class="md-raised md-primary" @click="showNewOutcomeDialog = true">New outcome</v-btn>
+    <v-btn id="newOutcomeBtn" @click="showNewOutcomeDialog = true">New outcome</v-btn>
   
     <div id="outcomeList">
       <h3>Outcomes</h3>
       <v-data-table
         :headers="headers"
-        :items="items"
+        :items="outcomes"
         :loading="isLoading"
         hide-actions
         class="elevation-1"
@@ -70,7 +70,7 @@
         <v-progress-linear slot="progress" color="blue" indeterminate></v-progress-linear>
         <template slot="items" slot-scope="props">
           <td class="text-xs-left">{{ props.item.name }}</td>
-          <td class="text-xs-left">{{ parseInt(props.item.amount) }}</td>
+          <td class="text-xs-left">{{ parseInt(props.item.amount)/10**18 }}</td>
           <td class="text-xs-left">{{ props.item.vote }}</td>
           <td class="text-xs-left"><v-switch v-model="props.item.enabled" @click="setEnabled(props.item.address, props.item.enabled)"></v-switch></td>
           <td class="text-xs-left"><v-btn @click="showBackDialogFunc(props.item.address)">Back</v-btn></td>
@@ -157,7 +157,7 @@ export default {
           text: ""
         }
       ],
-      items: []
+      outcomes: []
     };
   },
 
@@ -182,13 +182,12 @@ export default {
       });
     },
 
-    items: function(items) {
-      this.items = items
-      console.log(this.items)
+    outcomes: function(outcomes) {
+      this.outcomes = outcomes
     }
   },
 
-  props: ["outcomeAddresses", "items"],
+  props: ["outcomeAddresses", "outcomes"],
 
   methods: {
     addOutcomeToken: function() {
@@ -285,7 +284,6 @@ export default {
     waitForReceipt: function(hash, cb) {
       let self = this
       web3.eth.getTransactionReceipt(hash, function (err, receipt) {
-        console.log(hash)
         if (err) {
           error(err);
         }
@@ -321,23 +319,3 @@ export default {
   }
 };
 </script>
-
-
-<style lang="scss" scoped>
-#outcomeList {
-  display: block;
-  margin: auto;
-  width: 1000px;
-  border: 1px solid rgba(#000, 0.12);
-}
-
-#newOutcomeBtn {
-  margin: auto;
-  margin-bottom: 30px;
-  display: block;
-}
-
-.dialog {
-  padding: 30px;
-}
-</style>

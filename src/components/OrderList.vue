@@ -1,36 +1,32 @@
 
 <template>
     <div>
-        <md-dialog class="dialog" :md-active.sync="showDialog">
-            <md-dialog-title>Fill Order</md-dialog-title>
-            <md-field>
-                <label>Amount</label>
-                <md-input v-model="fillAmount"></md-input>
-            </md-field>
-            <md-button class="md-raised md-primary" @click="takeOrder()">Submit</md-button>
-        </md-dialog>
+        <v-dialog max-width="500px" v-model="showDialog">
+          <v-card>
+            <v-card-title>
+              Fill order
+            </v-card-title>
+            <v-card-text>
+              <v-text-field label="Amount" v-model="fillAmount"></v-text-field>
+              <v-btn @click="takeOrder()">Submit</v-btn>
+            </v-card-text>
+          </v-card>
+        </v-dialog>
 
-        <MakeOrderBtn @orderSubmitted="updateList()" :outcomeAddresses="outcomeAddresses" :outcomeNames="outcomeNames"></MakeOrderBtn>
-
-        <md-field id="orderList">
-           <label>Pick an order</label>
-            <md-list @md-selected="orderDialog">
-                <md-list-item v-for="(signedOrder,i) in signedOrders" :key="signedOrder.id" :value="signedOrder" @click="showDialog = true">
-                    <div v-if="typeof asyncDataHolder[i] !== 'undefined'">
-                      {{signedOrder.makerTokenAmount/10**18}} {{asyncDataHolder[i].makerTokenName}} for {{signedOrder.takerTokenAmount/10**18}} {{asyncDataHolder[i].takerTokenName}}
-                    </div>
-                </md-list-item>
-            </md-list>
-        </md-field>
+        <MakeOrderBtn @orderSubmitted="updateList()" :outcomes="outcomes" :outcomeAddresses="outcomeAddresses"></MakeOrderBtn>
 
         <v-data-table
         :headers="headers"
-        :items="items"
+        :items="orders"
         :loading="isLoading"
         hide-actions
         class="elevation-1"
         >
-          
+          <v-progress-linear slot="progress" color="blue" indeterminate></v-progress-linear>
+          <template slot="items" slot-scope="props">
+            <td @click="showDialog = true" class="text-xs-left">{{ props.item.makerTokenAmount/10**18 }} {{ props.item.makerTokenName }}</td>
+            <td @click="showDialog = true" class="text-xs-left">{{ props.item.takerTokenAmount/10**18 }} {{ props.item.takerTokenName }}</td>
+          </template>
         </v-data-table>
     </div>
 </template>
@@ -66,13 +62,24 @@ var openrelayBaseURL = "https://api.openrelay.xyz";
 export default {
   data() {
     return {
-      outcomes: undefined,
       selectedOrder: undefined,
       signedOrders: [],
       fillAmount: undefined,
       showDialog: false,
       currentOrder: undefined,
-      asyncDataHolder: []
+      asyncDataHolder: [],
+      headers: [
+        {
+          sortable: false,
+          text: "Maker token"
+        },
+        {
+          sortable: false,
+          text: "Taker token"
+        }
+      ],
+      orders: [],
+      isLoading: false
     };
   },
 
@@ -80,7 +87,7 @@ export default {
     MakeOrderBtn
   },
 
-  props: ["outcomeAddresses", "outcomeNames"],
+  props: ["outcomeAddresses", "outcomes"],
 
   created: function() {
     this.updateList();
@@ -129,8 +136,10 @@ export default {
       self.signedOrders.map((order, i) => {
         OutcomeToken.getName(order.makerTokenAddress).then(makerTokenName => {
           OutcomeToken.getName(order.takerTokenAddress).then(takerTokenName => {
-            self.$set(self.asyncDataHolder, i, {
+            self.$set(self.orders, i, {
+              makerTokenAmount: order.makerTokenAmount,
               makerTokenName: makerTokenName,
+              takerTokenAmount: order.takerTokenAmount,
               takerTokenName: takerTokenName
             });
           });
@@ -140,14 +149,3 @@ export default {
   }
 };
 </script>
-
-<style>
-#orderList {
-  display: inline-block;
-  width: 100%;
-}
-
-.dialog {
-  padding: 30px;
-}
-</style>
