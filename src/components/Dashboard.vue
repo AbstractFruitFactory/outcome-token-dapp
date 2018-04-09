@@ -33,7 +33,7 @@
                   <v-icon>dashboard</v-icon>
                 </v-list-tile-action>
                 <v-list-tile-content>
-                  <v-list-tile-title>Get WETH</v-list-tile-title>
+                  <v-list-tile-title>WETH</v-list-tile-title>
                 </v-list-tile-content>
               </v-list-tile>
             </v-list>
@@ -46,7 +46,7 @@
                 <OrderList :outcomeAddresses="outcomeAddresses" :outcomes="outcomes"></OrderList>
               </div>
               <div v-show="showOutcomeContent == true">
-                <OutcomeContent v-on:update="updateOutcomes" :outcomes="outcomes" :outcomeAddresses="outcomeAddresses"></OutcomeContent>
+                <OutcomeContent v-on:update="updateOutcomes" :outcomesProp="outcomes" :outcomeAddresses="outcomeAddresses"></OutcomeContent>
               </div>
               <div v-show="showWETHContent == true">
                 <GetWethContent></GetWethContent>
@@ -94,6 +94,7 @@ providerEngine.start();
 var zeroEx = new ZeroEx(providerEngine, {
   networkId: 3
 });
+
 export default {
   name: "dashboard",
   data() {
@@ -150,11 +151,14 @@ export default {
     },
 
     updateOutcomes: async function() {
+      console.log("hej")
       let self = this;
       self.outcomeAddresses = await OutcomeList.getOutcomeAddresses();
       self.outcomeNames = [];
       self.outcomeAmounts = [];
+      let count = 0;
       self.outcomeAddresses.map(async (address, i) => {
+        count = i;
         let name = await OutcomeToken.getName(address)
         let amount = await OutcomeToken.getAmount(address)
         let vote = await Voting.getVoteStatus(address)

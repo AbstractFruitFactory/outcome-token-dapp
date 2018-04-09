@@ -1,5 +1,35 @@
 <template>
   <div>
+    <v-dialog max-width="800px" v-model="helpDialog">
+      <v-card>
+        <v-card-text>
+          <p>
+            This view shows the currently deployed outcomes on the network. The table shows the outcome name, the amount of the outcome token
+            that the current account owns, the vote status, and if it is enabled for trading.
+          </p>
+          <p>
+            The back button allows you to back the outcome, which gives you outcome tokens in exchange for Ether. You can only back an outcome if you
+            are the creator of that outcome.
+          </p>
+          <p>
+            The redeem button lets you redeem tokens, depending on the vote status. If the vote is "met", you will be able to exchange outcome tokens for Ether.
+            If the vote is "not met", and you are the backer, you can redeem the whole backed amount.
+          </p>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+      <v-btn
+          slot="activator"
+          color="pink"
+          dark
+          fab
+          fixed
+          top
+          right
+          @click="helpDialog = true"
+        >
+        <v-icon>help</v-icon>
+      </v-btn>
     <v-dialog max-width="500px" v-model="showNewOutcomeDialog">
       <v-card>
         <v-card-title>
@@ -59,7 +89,7 @@
     <v-btn id="newOutcomeBtn" @click="showNewOutcomeDialog = true">New outcome</v-btn>
   
     <div id="outcomeList">
-      <h3>Outcomes</h3>
+      <h3 class="tableTitle" >Outcomes</h3>
       <v-data-table
         :headers="headers"
         :items="outcomes"
@@ -157,7 +187,8 @@ export default {
           text: ""
         }
       ],
-      outcomes: []
+      outcomes: [],
+      helpDialog: false
     };
   },
 
@@ -182,21 +213,25 @@ export default {
       });
     },
 
-    outcomes: function(outcomes) {
-      this.outcomes = outcomes
+    outcomesProp: function(_outcomes) {
+      this.outcomes = _outcomes
     }
   },
 
-  props: ["outcomeAddresses", "outcomes"],
+  props: ["outcomeAddresses", "outcomesProp"],
 
   methods: {
     addOutcomeToken: function() {
       let self = this;
       self.disabled = true;
       let voting = Voting.getVotingAddress();
-      OutcomeToken.deployNew(self.outcomeName, voting).then(function(address) {
-        self.voteStatus[address] = "-";
-        self.$emit("update");
+      OutcomeToken.deployNew(self.outcomeName, voting).then(function(hash) {
+        self.showNewOutcomeDialog = false
+        self.isLoading = true
+        self.waitForReceipt(hash, function(receipt) {
+            self.isLoading = false;
+            self.$emit("update");
+        })
       });
     },
 
@@ -220,9 +255,7 @@ export default {
       let address = self.selectedOutcomeAddress;
       let voteStatus = await Voting.getVoteStatus(address);
       let isOwner = await OutcomeToken.isOwner(address);
-
-      if ((voteStatus == self.Vote.NOT_MET && isOwner) || (voteStatus == self.Vote.MET && !isOwner)) {
-        OutcomeToken.redeemBackerToken(address, self.redeemValue).then(
+      OutcomeToken.redeemBackerToken(address, self.redeemValue).then(
           function(hash) {
             self.isLoading = true
             self.showRedeemDialog = false;
@@ -230,11 +263,9 @@ export default {
               self.isLoading = false;
             })
           }
-        );
-      } else {
-        console.log("Invalid action.");
-      }
+      );
     },
+  
 
     vote: function() {
       let self = this;
@@ -319,3 +350,13 @@ export default {
   }
 };
 </script>
+
+<style>
+.tableTitle {
+  margin-top: 20px;
+}
+.help-card {
+  margin-top: 80px;
+  margin-right: 100px;
+}
+</style>

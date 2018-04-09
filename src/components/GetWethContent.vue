@@ -1,6 +1,29 @@
 
 <template>
     <div>
+        <v-dialog max-width="800px" v-model="helpDialog">
+      <v-card>
+        <v-card-text>
+          <p>
+              Here, you can exchange Ether for WETH. WETH represents Ether but it is wrapped in a ERC20 token format, which lets
+              you trade tokens for Ether in the exchange.
+          </p>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+      <v-btn
+          slot="activator"
+          color="pink"
+          dark
+          fab
+          fixed
+          top
+          right
+          @click="helpDialog = true"
+        >
+        <v-icon>help</v-icon>
+      </v-btn>
+        <p>Current WETH balance: {{ parseInt(balance)/10**18 }}</p>
         <v-text-field label="Amount" v-model="amount"></v-text-field>
         <v-btn @click="getWETH()">Get WETH</v-btn>
     </div>
@@ -34,24 +57,32 @@
     var zeroEx = new ZeroEx(providerEngine, {
         networkId: 3
     });
+    var WETHaddress = zeroEx.etherToken.getContractAddressIfExists();
     
     
     export default {
         data() {
             return {
                 showDialog: false,
-                amount: undefined
+                amount: undefined,
+                helpDialog: false,
+                balance: 0
             }
         },
-    
-        props: ["outcomes"],
-    
+        created: async function() {
+            this.setBalance()
+        },
         methods: {
             getWETH: async function() {
                 const ethToConvert = ZeroEx.toBaseUnitAmount(new BigNumber(this.amount), 18)
-                const convertEthTxHash = await zeroEx.etherToken.depositAsync(Addresses.WETH_ADDRESS, ethToConvert, window.web3.eth.coinbase)
+                const convertEthTxHash = await zeroEx.etherToken.depositAsync(WETHaddress, ethToConvert, window.web3.eth.coinbase)
                 showDialog = false
                 await zeroEx.awaitTransactionMinedAsync(convertEthTxHash)
+                this.setBalance()
+            },
+
+            setBalance: async function() {
+                this.balance = await zeroEx.token.getBalanceAsync(WETHaddress, window.web3.eth.coinbase)
             }
         }
     };

@@ -7,26 +7,30 @@
                 Make order
               </v-card-title>
               <v-card-text>
-                <v-flex xs6>
-                  <v-select
-                    :items="makerTokens"
-                    v-model="makerTokenAddress"
-                    label="Select maker token"
-                    class="input-group--focused"
-                    item-value="value"
-                  ></v-select>
-                  <v-text-field label="Maker token amount" v-model="makerTokenAmount"></v-text-field>
-                </v-flex>
-                <v-flex xs6>
-                  <v-select
-                    :items="takerTokens"
-                    v-model="takerTokenAddress"
-                    label="Select maker token"
-                    class="input-group--focused"
-                    item-value="value"
-                  ></v-select>
-                  <v-text-field label="Taker token amount" v-model="takerTokenAmount"></v-text-field>
-                </v-flex>
+                <v-container>
+                  <v-layout row-wrap>
+                    <v-flex class="flex" xs6>
+                    <v-select
+                      :items="makerTokens"
+                      v-model="makerTokenAddress"
+                      label="Select maker token"
+                      class="input-group--focused"
+                      item-value="value"
+                    ></v-select>
+                     <v-select
+                      :items="takerTokens"
+                      v-model="takerTokenAddress"
+                      label="Select taker token"
+                      class="input-group--focused"
+                      item-value="value"
+                    ></v-select>
+                  </v-flex>
+                  <v-flex xs6>
+                    <v-text-field label="Maker token amount" v-model="makerTokenAmount"></v-text-field>
+                    <v-text-field label="Taker token amount" v-model="takerTokenAmount"></v-text-field>
+                  </v-flex>
+                </v-layout>
+                </v-container>
                 <v-btn @click="makeOrder()">Submit</v-btn>
               </v-card-text>
             </v-card>
@@ -61,6 +65,8 @@ var zeroEx = new ZeroEx(providerEngine, {
   networkId: 3
 });
 var openrelayBaseURL = "https://api.openrelay.xyz";
+var WETHaddress = zeroEx.etherToken.getContractAddressIfExists();
+
 
 export default {
   data() {
@@ -83,10 +89,14 @@ export default {
   watch: {
     outcomes: function(outcomes) {
       let self = this
+      let count = 0
       outcomes.map((outcome, i) => {
+        count = i
         self.$set(self.makerTokens, i, { text: outcome.name, value: outcome.address })
         self.$set(self.takerTokens, i, { text: outcome.name, value: outcome.address })
       })
+      self.$set(self.makerTokens, count + 1, { text: 'WETH', value: WETHaddress })
+      self.$set(self.takerTokens, count + 1, { text: 'WETH', value: WETHaddress })
     }
   },
 
@@ -114,9 +124,7 @@ export default {
           new BigNumber(this.takerTokenAmount),
           18
         ),
-        expirationUnixTimestampSec: parseInt(
-            (new Date().getTime()/1000) + duration
-        ).toString() 
+        expirationUnixTimestampSec: new BigNumber(Date.now() + 3600)
       };
       var feePromise = rp({
         method: "POST",
@@ -156,3 +164,10 @@ export default {
   }
 };
 </script>
+<style>
+
+.flex {
+  margin: 10px;
+}
+
+</style>

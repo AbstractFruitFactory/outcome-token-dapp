@@ -6,9 +6,16 @@ import Web3 from 'web3'
 import router from './router'
 
 import Vuetify from 'vuetify'
-
+import colors from 'vuetify/es5/util/colors'
 import 'vuetify/dist/vuetify.min.css'
-Vue.use(Vuetify)
+Vue.use(Vuetify, {
+  theme: {
+    primary: colors.shades.white,
+    secondary: colors.grey.darken1,
+    accent: colors.green.darken1,
+    error: colors.red.accent3
+  }
+})
 
 Vue.config.productionTip = false
 
