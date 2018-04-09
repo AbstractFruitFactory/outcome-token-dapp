@@ -1,6 +1,10 @@
 
 <template>
     <div>
+        <v-snackbar :timeout="6000" top v-model="snackbar">
+            You don't have enough Ether!
+            <v-btn flat color="pink" @click.native="snackbar = false">Close</v-btn>
+        </v-snackbar>
         <v-dialog max-width="800px" v-model="helpDialog">
             <v-card>
                 <v-card-text>
@@ -24,7 +28,8 @@
         <p>Current WETH balance: {{ parseInt(balance)/10**18 }}</p>
         <v-btn @click="showDialog = true">Get WETH</v-btn>
         <v-layout class="layout">
-            <p>Enabled for trading: </p><v-switch class="switch" v-model="enabled" @click="setEnabled(enabled)"></v-switch>
+            <p>Enabled for trading: </p>
+            <v-switch class="switch" v-model="enabled" @click="setEnabled(enabled)"></v-switch>
         </v-layout>
     </div>
 </template>
@@ -67,7 +72,9 @@
                 amount: undefined,
                 helpDialog: false,
                 balance: 0,
-                enabled: undefined
+                enabled: undefined,
+                snackbar: false,
+                errorMsg: undefined
             }
         },
         created: async function() {
@@ -77,11 +84,17 @@
         },
         methods: {
             getWETH: async function() {
+                var self = this
                 const ethToConvert = ZeroEx.toBaseUnitAmount(new BigNumber(this.amount), 18)
-                const convertEthTxHash = await zeroEx.etherToken.depositAsync(WETHaddress, ethToConvert, window.web3.eth.coinbase)
-                showDialog = false
-                await zeroEx.awaitTransactionMinedAsync(convertEthTxHash)
-                this.setBalance()
+                const convertEthTxHash = zeroEx.etherToken.depositAsync(WETHaddress, ethToConvert, window.web3.eth.coinbase).then(async function() {
+                    self.showDialog = false
+                    await zeroEx.awaitTransactionMinedAsync(convertEthTxHash)
+                    this.setBalance()
+                }).catch(function(err) {
+                    if(err.message == "INSUFFICIENT_ETH_BALANCE_FOR_DEPOSIT") {
+                        self.snackbar = true
+                    }
+                })
             },
     
             setBalance: async function() {
@@ -111,7 +124,7 @@
     p {
         padding-right: 10px;
     }
-
+    
     .layout {
         padding-top: 30px;
     }
