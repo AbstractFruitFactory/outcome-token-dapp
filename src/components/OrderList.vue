@@ -124,20 +124,20 @@
   
     methods: {
       takeOrder: async function() {
+        var self = this
         var takerAddress = window.web3.eth.coinbase;
         var shouldThrowOnInsufficientBalanceOrAllowance = true;
         const fillTakerTokenAmount = ZeroEx.toBaseUnitAmount(
-          new BigNumber(this.fillAmount),
+          new BigNumber(self.fillAmount),
           18
         );
         const txHash = await zeroEx.exchange.fillOrderAsync(
-          this.currentOrder,
+          self.currentOrder,
           fillTakerTokenAmount,
           shouldThrowOnInsufficientBalanceOrAllowance,
           takerAddress
         );
         const txReceipt = await zeroEx.awaitTransactionMinedAsync(txHash);
-        console.log("FillOrder transaction receipt: ", txReceipt);
       },
   
       orderDialog: function(signedOrder) {
@@ -154,6 +154,9 @@
           json: true
         }).then(orders => {
           for (var order of orders) {
+            order["takerTokenAmount"] = new BigNumber(order["takerTokenAmount"])
+            order["makerTokenAmount"] = new BigNumber(order["makerTokenAmount"])
+            order["expirationUnixTimestampSec"] = new BigNumber(order["expirationUnixTimestampSec"])
             self.signedOrders.push(order);
           }
           self.loadAsyncData();

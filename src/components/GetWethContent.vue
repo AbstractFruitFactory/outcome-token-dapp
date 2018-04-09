@@ -2,30 +2,30 @@
 <template>
     <div>
         <v-dialog max-width="800px" v-model="helpDialog">
-      <v-card>
-        <v-card-text>
-          <p>
-              Here, you can exchange Ether for WETH. WETH represents Ether but it is wrapped in a ERC20 token format, which lets
-              you trade tokens for Ether in the exchange.
-          </p>
-        </v-card-text>
-      </v-card>
-    </v-dialog>
-      <v-btn
-          slot="activator"
-          color="pink"
-          dark
-          fab
-          fixed
-          top
-          right
-          @click="helpDialog = true"
-        >
-        <v-icon>help</v-icon>
-      </v-btn>
+            <v-card>
+                <v-card-text>
+                    <p>
+                        Here, you can exchange Ether for WETH. WETH represents Ether but it is wrapped in a ERC20 token format, which lets you trade tokens for Ether in the exchange.
+                    </p>
+                </v-card-text>
+            </v-card>
+        </v-dialog>
+        <v-dialog max-width="500px" v-model="showDialog">
+            <v-card>
+                <v-card-text>
+                    <v-text-field label="Amount" v-model="amount"></v-text-field>
+                    <v-btn @click="getWETH()">Submit</v-btn>
+                </v-card-text>
+            </v-card>
+        </v-dialog>
+        <v-btn slot="activator" color="pink" dark fab fixed top right @click="helpDialog = true">
+            <v-icon>help</v-icon>
+        </v-btn>
         <p>Current WETH balance: {{ parseInt(balance)/10**18 }}</p>
-        <v-text-field label="Amount" v-model="amount"></v-text-field>
-        <v-btn @click="getWETH()">Get WETH</v-btn>
+        <v-btn @click="showDialog = true">Get WETH</v-btn>
+        <v-layout class="layout">
+            <p>Enabled for trading: </p><v-switch class="switch" v-model="enabled" @click="setEnabled(enabled)"></v-switch>
+        </v-layout>
     </div>
 </template>
 
@@ -66,11 +66,14 @@
                 showDialog: false,
                 amount: undefined,
                 helpDialog: false,
-                balance: 0
+                balance: 0,
+                enabled: undefined
             }
         },
         created: async function() {
             this.setBalance()
+            let allowance = await zeroEx.token.getProxyAllowanceAsync(WETHaddress, window.web3.eth.coinbase)
+            this.enabled = (allowance > 0) ? true : false;
         },
         methods: {
             getWETH: async function() {
@@ -80,10 +83,36 @@
                 await zeroEx.awaitTransactionMinedAsync(convertEthTxHash)
                 this.setBalance()
             },
-
+    
             setBalance: async function() {
                 this.balance = await zeroEx.token.getBalanceAsync(WETHaddress, window.web3.eth.coinbase)
-            }
+            },
+    
+            setEnabled: function(enabled) {
+                if (!enabled) {
+                    const setAllowTxHash = zeroEx.token.setUnlimitedProxyAllowanceAsync(
+                        WETHaddress,
+                        window.web3.eth.coinbase
+                    );
+                } else {
+                    const setAllowTxHash = zeroEx.token.setProxyAllowanceAsync(
+                        WETHaddress,
+                        window.web3.eth.coinbase,
+                        new BigNumber(0)
+                    );
+                }
+            },
+    
         }
     };
 </script>
+
+<style>
+    p {
+        padding-right: 10px;
+    }
+
+    .layout {
+        padding-top: 30px;
+    }
+</style>

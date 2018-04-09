@@ -146,7 +146,6 @@ export default {
       selectedOutcomeAddress: undefined,
       backValue: undefined,
       showBackDialog: false,
-      switchStatus: [],
       Vote: {
         MET: 1,
         NOT_MET: 2
