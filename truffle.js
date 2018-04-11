@@ -1,7 +1,7 @@
 var HDWalletProvider = require("truffle-hdwallet-provider");
 var fs = require('fs');
 
-var mnemonic  = fs.readFileSync('seed_words.txt', 'utf8');
+var mnemonic  = ""
 
 module.exports = {
   networks: {

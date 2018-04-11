@@ -244,7 +244,6 @@ export default {
             self.isLoading = false;
             self.$emit("update");
           })
-         
         }
       );
     },
