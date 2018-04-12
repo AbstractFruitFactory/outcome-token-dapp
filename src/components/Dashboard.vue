@@ -1,9 +1,6 @@
 <template>
   <v-app id="app" dark>
     <div>
-      <v-alert type="error" :value="showWrongNetworkWindow">
-        This DApp is currently only supported on Ropsten testnet. Please connect to Ropsten through Metamask.
-      </v-alert>
     </div>
     <v-navigation-drawer fixed app permanent>
       <v-toolbar flat>
@@ -44,6 +41,9 @@
       </v-list>
     </v-navigation-drawer>
     <v-content>
+      <v-alert type="error" :value="showWrongNetworkWindow">
+        This DApp is currently only supported on Ropsten testnet. Please connect to Ropsten through Metamask.
+      </v-alert>
       <v-container fill-height>
         <v-layout justify-center>
           <v-flex shrink>
@@ -66,7 +66,6 @@
 <script>
   import OutcomeToken from "@/js/outcometoken.js";
   import Voting from "@/js/voting.js";
-  import OutcomeItem from "@/components/OutcomeItem.vue";
   import GetWethContent from "@/components/GetWethContent.vue";
   import SetAllowance from "@/components/SetAllowance.vue";
   import OrderList from "@/components/OrderList.vue";
@@ -146,7 +145,6 @@
       })
     },
     components: {
-      OutcomeItem,
       SetAllowance,
       OrderList,
       GetWethContent,
@@ -175,28 +173,55 @@
         }
       },
   
-      updateOutcomes: async function() {
-        console.log("hej")
+      updateOutcomes: async function(filter) {
         let self = this;
+        self.outcomes = [];
         self.outcomeAddresses = await OutcomeList.getOutcomeAddresses();
         self.outcomeNames = [];
         self.outcomeAmounts = [];
         let count = 0;
-        self.outcomeAddresses.map(async(address, i) => {
-          count = i;
+        self.outcomeAddresses.map(async(address) => {
           let name = await OutcomeToken.getName(address)
           let amount = await OutcomeToken.getAmount(address)
           let vote = await Voting.getVoteStatus(address)
           let allowance = await zeroEx.token.getProxyAllowanceAsync(address, window.web3.eth.coinbase)
           let enabled = (allowance > 0) ? true : false;
-          self.$set(self.outcomes, i, {
-            name: name,
-            amount: amount,
-            vote: voting[vote],
-            enabled: enabled,
-            address: address
-          })
+          if(filter != undefined) {
+            var filtered = await self.isFilteredOut(name, amount, vote, filter);
+          }
+          if((filter == undefined) || !filtered) {
+            self.outcomes.push({
+              name: name,
+              amount: amount,
+              vote: voting[vote],
+              enabled: enabled,
+              address: address
+            })
+          }
         });
+      },
+
+      isFilteredOut: async function(name, amount, vote, filter) {
+        if(!name.toLowerCase().includes(filter.name.toLowerCase())) {
+          return true
+        }
+        if((filter.amount) && (amount == 0)) {
+          return true
+        }
+        if(!(filter.metVote) && vote == 1) {
+          return true
+        }
+        if(!(filter.notMetVote) && vote == 2) {
+          return true
+        }
+        if(!(filter.unVoted) && vote == 0) {
+          return true
+        }
+        let isOwner = await OutcomeToken.isOwner(window.web3.eth.coinbase)
+        if(!(filter.deployed) && isOwner) {
+          return true
+        }
+        return false
       }
     }
   };
