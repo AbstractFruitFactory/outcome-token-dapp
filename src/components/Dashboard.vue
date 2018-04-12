@@ -187,7 +187,7 @@
           let allowance = await zeroEx.token.getProxyAllowanceAsync(address, window.web3.eth.coinbase)
           let enabled = (allowance > 0) ? true : false;
           if(filter != undefined) {
-            var filtered = await self.isFilteredOut(name, amount, vote, filter);
+            var filtered = await self.isFilteredOut(name, amount, vote, filter, address);
           }
           if((filter == undefined) || !filtered) {
             self.outcomes.push({
@@ -201,7 +201,7 @@
         });
       },
 
-      isFilteredOut: async function(name, amount, vote, filter) {
+      isFilteredOut: async function(name, amount, vote, filter, address) {
         if(!name.toLowerCase().includes(filter.name.toLowerCase())) {
           return true
         }
@@ -217,8 +217,11 @@
         if(!(filter.unVoted) && vote == 0) {
           return true
         }
-        let isOwner = await OutcomeToken.isOwner(window.web3.eth.coinbase)
+        let isOwner = await OutcomeToken.isOwner(address)
         if(!(filter.deployed) && isOwner) {
+          return true
+        }
+        if(!(filter.deployedOthers) && !isOwner) {
           return true
         }
         return false

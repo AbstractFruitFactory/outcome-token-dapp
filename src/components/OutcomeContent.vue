@@ -78,7 +78,8 @@
           <v-btn id="newOutcomeBtn" @click="showNewOutcomeDialog = true">New outcome</v-btn>
         </v-flex>
         <v-flex align-content-start xs2 class="filter">
-          <v-checkbox label="Deployed by me" v-model="deployedFilter" @change="applyFilter()"></v-checkbox>
+          <v-checkbox label="Created by me" v-model="deployedFilter" @change="applyFilter()"></v-checkbox>
+          <v-checkbox label="Created by others" v-model="deployedOthersFilter" @change="applyFilter()"></v-checkbox>
           <v-checkbox label="Met" v-model="metVoteFilter" @change="applyFilter()"></v-checkbox>
           <v-checkbox label="Not met" v-model="notMetVoteFilter" @change="applyFilter()"></v-checkbox>
           <v-checkbox label="Unvoted" v-model="unVotedFilter" @change="applyFilter()"></v-checkbox>
@@ -169,6 +170,7 @@
         voteStatus: {},
         isLoading: false,
         deployedFilter: true,
+        deployedOthersFilter: true,
         metVoteFilter: true,
         notMetVoteFilter: true,
         unVotedFilter: true,
@@ -323,6 +325,7 @@
           name: self.searchFilter,
           amount: self.amountFilter,
           deployed: self.deployedFilter,
+          deployedOthers: self.deployedOthersFilter,
           metVote: self.metVoteFilter,
           notMetVote: self.notMetVoteFilter,
           unVoted: self.unVotedFilter
