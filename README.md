@@ -6,6 +6,8 @@ In the project folder:
 
 ```npm install```
 
+```truffle compile```
+
 ```npm run start```
 
 In the browser, open metamask and choose Ropsten in the list of networks.
