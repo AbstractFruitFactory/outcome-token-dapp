@@ -38,11 +38,27 @@
             <v-list-tile-title>WETH</v-list-tile-title>
           </v-list-tile-content>
         </v-list-tile>
+        <v-list-tile @click="toggleContent(4)">
+          <v-list-tile-action>
+            <v-icon>dashboard</v-icon>
+          </v-list-tile-action>
+          <v-list-tile-content>
+            <v-list-tile-title>Account</v-list-tile-title>
+          </v-list-tile-content>
+        </v-list-tile>
+        <v-list-tile href="https://0xproject.com/portal/balances">
+          <v-list-tile-action>
+            <v-icon>dashboard</v-icon>
+          </v-list-tile-action>
+          <v-list-tile-content>
+            <v-list-tile-title>0x token site</v-list-tile-title>
+          </v-list-tile-content>
+        </v-list-tile>
       </v-list>
     </v-navigation-drawer>
     <v-content>
       <v-alert type="error" :value="showWrongNetworkWindow">
-        This DApp is currently only supported on Ropsten testnet. Please connect to Ropsten through Metamask.
+        {{ errorMsg }}
       </v-alert>
       <v-container fill-height>
         <v-layout justify-center>
@@ -54,7 +70,10 @@
               <OutcomeContent v-on:update="updateOutcomes" :outcomesProp="outcomes" :outcomeAddresses="outcomeAddresses"></OutcomeContent>
             </div>
             <div v-show="showWETHContent == true">
-              <GetWethContent></GetWethContent>
+              <GetWethContent :currentAccount="currentAccount"></GetWethContent>
+            </div>
+            <div v-show="showAccountContent == true">
+              <AccountContent :outcomes="outcomes"></AccountContent>
             </div>
           </v-flex>
         </v-layout>
@@ -70,6 +89,7 @@
   import SetAllowance from "@/components/SetAllowance.vue";
   import OrderList from "@/components/OrderList.vue";
   import OutcomeContent from "@/components/OutcomeContent.vue";
+  import AccountContent from "@/components/AccountContent.vue";
   import OutcomeList from "@/js/outcomelist.js";
   import {
     ZeroExError
@@ -85,11 +105,13 @@
   import {
     ZeroEx
   } from "0x.js";
+  
   var content = {
     ORDER_LIST: 0,
     MAKE_ORDER: 1,
     ADD_OUTCOME: 2,
-    GET_WETH: 3
+    GET_WETH: 3,
+    ACCOUNT: 4
   };
   var voting = ["-", "Met", "Not met"]
   
@@ -107,6 +129,7 @@
     networkId: 3
   });
   
+  
   export default {
     name: "dashboard",
     data() {
@@ -122,25 +145,38 @@
         outcomeNames: undefined,
         outcomeAmounts: undefined,
         outcomes: [],
-        showWrongNetworkWindow: false
+        showWrongNetworkWindow: false,
+        errorMsg: undefined,
+        showAccountContent: false,
+        currentAccount: undefined
       };
     },
     beforeCreate: function() {
       let self = this;
-      Voting.init();
-      OutcomeToken.init();
+      Voting.init()
+      OutcomeToken.init()
       OutcomeList.init().then(function() {
-        self.updateOutcomes();
-      });
+        self.updateOutcomes()
+      })
     },
-    created: function() {
+    created: async function() {
       var self = this
-      window.web3.version.getNetwork((err, netId) => {
-        switch (netId) {
-          case "3":
-            break
-          default:
-            self.showWrongNetworkWindow = true
+      self.watchAccountUpdate().then(function() {
+        if (self.currentAccount == undefined) {
+          self.errorMsg = "Please log in to Metamask to use this DApp."
+          self.showWrongNetworkWindow = true;
+        } else {
+          web3.eth.net.getId()
+            .then(function(networkId) {
+              switch (networkId) {
+                case 3:
+                  break
+                default:
+                  self.errorMsg = "This DApp is currently only supported on Ropsten testnet. Please connect to Ropsten through Metamask."
+                  self.showWrongNetworkWindow = true
+              }
+            });
+  
         }
       })
     },
@@ -148,7 +184,8 @@
       SetAllowance,
       OrderList,
       GetWethContent,
-      OutcomeContent
+      OutcomeContent,
+      AccountContent
     },
     methods: {
       toggleContent: function(contentNbr) {
@@ -157,6 +194,7 @@
         self.showMakeOrder = false;
         self.showOutcomeContent = false;
         self.showWETHContent = false;
+        self.showAccountContent = false;
         switch (contentNbr) {
           case content.ORDER_LIST:
             self.showOrderList = true;
@@ -170,7 +208,25 @@
           case content.GET_WETH:
             self.showWETHContent = true;
             break;
+          case content.ACCOUNT:
+            self.showAccountContent = true
+            break
         }
+      },
+  
+      watchAccountUpdate: function() {
+        let self = this
+        window.setInterval(function() {
+          window.web3.eth.getAccounts(function(err, accounts) {
+            self.currentAccount = accounts[0]
+          })
+        }, 1000);
+        return new Promise((resolve, reject) => {
+          window.web3.eth.getAccounts(function(err, accounts) {
+            self.currentAccount = accounts[0]
+            resolve()
+          })
+        })
       },
   
       updateOutcomes: async function(filter) {
@@ -180,16 +236,18 @@
         self.outcomeNames = [];
         self.outcomeAmounts = [];
         let count = 0;
+  
         self.outcomeAddresses.map(async(address) => {
           let name = await OutcomeToken.getName(address)
           let amount = await OutcomeToken.getAmount(address)
           let vote = await Voting.getVoteStatus(address)
-          let allowance = await zeroEx.token.getProxyAllowanceAsync(address, window.web3.eth.coinbase)
+         
+          let allowance = await zeroEx.token.getProxyAllowanceAsync(address, self.currentAccount)
           let enabled = (allowance > 0) ? true : false;
-          if(filter != undefined) {
+          if (filter != undefined) {
             var filtered = await self.isFilteredOut(name, amount, vote, filter, address);
           }
-          if((filter == undefined) || !filtered) {
+          if ((filter == undefined) || !filtered) {
             self.outcomes.push({
               name: name,
               amount: amount,
@@ -198,30 +256,31 @@
               address: address
             })
           }
+          console.log(self.outcomes)
         });
       },
-
+  
       isFilteredOut: async function(name, amount, vote, filter, address) {
-        if(!name.toLowerCase().includes(filter.name.toLowerCase())) {
+        if (!name.toLowerCase().includes(filter.name.toLowerCase())) {
           return true
         }
-        if((filter.amount) && (amount == 0)) {
+        if ((filter.amount) && (amount == 0)) {
           return true
         }
-        if(!(filter.metVote) && vote == 1) {
+        if (!(filter.metVote) && vote == 1) {
           return true
         }
-        if(!(filter.notMetVote) && vote == 2) {
+        if (!(filter.notMetVote) && vote == 2) {
           return true
         }
-        if(!(filter.unVoted) && vote == 0) {
+        if (!(filter.unVoted) && vote == 0) {
           return true
         }
         let isOwner = await OutcomeToken.isOwner(address)
-        if(!(filter.deployed) && isOwner) {
+        if (!(filter.deployed) && isOwner) {
           return true
         }
-        if(!(filter.deployedOthers) && !isOwner) {
+        if (!(filter.deployedOthers) && !isOwner) {
           return true
         }
         return false

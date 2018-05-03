@@ -104,8 +104,13 @@ export default {
 
   methods: {
     makeOrder: async function() {
+      
       var self = this;
-      var makerAddress = window.web3.eth.coinbase;
+      let currentAccount
+      window.web3.eth.getAccounts((err, accounts) => {
+            currentAccount = accounts[0]
+        })
+      var makerAddress = currentAccount;
       var duration = 60*60; // 1 hour
       const order = {
         maker: makerAddress,

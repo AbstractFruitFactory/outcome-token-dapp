@@ -77,40 +77,45 @@
                 errorMsg: undefined
             }
         },
-        created: async function() {
-            this.setBalance()
-            let allowance = await zeroEx.token.getProxyAllowanceAsync(WETHaddress, window.web3.eth.coinbase)
-            this.enabled = (allowance > 0) ? true : false;
+        props: ["currentAccount"],
+        watch: {
+            currentAccount: async function(currentAccount) {
+                this.currentAccount = currentAccount
+                this.setBalance()
+                //let allowance = await zeroEx.token.getProxyAllowanceAsync(WETHaddress, currentAccount)
+                //this.enabled = (allowance > 0) ? true : false;
+            }
         },
         methods: {
             getWETH: async function() {
                 var self = this
                 const ethToConvert = ZeroEx.toBaseUnitAmount(new BigNumber(this.amount), 18)
-                const convertEthTxHash = zeroEx.etherToken.depositAsync(WETHaddress, ethToConvert, window.web3.eth.coinbase).then(async function() {
+                const convertEthTxHash = zeroEx.etherToken.depositAsync(WETHaddress, ethToConvert, self.currentAccount).then(async function() {
                     self.showDialog = false
                     await zeroEx.awaitTransactionMinedAsync(convertEthTxHash)
                     this.setBalance()
                 }).catch(function(err) {
-                    if(err.message == "INSUFFICIENT_ETH_BALANCE_FOR_DEPOSIT") {
+                    if (err.message == "INSUFFICIENT_ETH_BALANCE_FOR_DEPOSIT") {
                         self.snackbar = true
                     }
                 })
             },
     
             setBalance: async function() {
-                this.balance = await zeroEx.token.getBalanceAsync(WETHaddress, window.web3.eth.coinbase)
+                let self = this
+                self.balance = await zeroEx.token.getBalanceAsync(WETHaddress, self.currentAccount)
             },
     
             setEnabled: function(enabled) {
                 if (!enabled) {
                     const setAllowTxHash = zeroEx.token.setUnlimitedProxyAllowanceAsync(
                         WETHaddress,
-                        window.web3.eth.coinbase
+                        self.currentAccount
                     );
                 } else {
                     const setAllowTxHash = zeroEx.token.setProxyAllowanceAsync(
                         WETHaddress,
-                        window.web3.eth.coinbase,
+                        self.currentAccount,
                         new BigNumber(0)
                     );
                 }

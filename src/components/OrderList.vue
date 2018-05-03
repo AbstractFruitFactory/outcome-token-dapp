@@ -125,7 +125,11 @@
     methods: {
       takeOrder: async function() {
         var self = this
-        var takerAddress = window.web3.eth.coinbase;
+        let currentAccount
+        window.web3.eth.getAccounts((err, accounts) => {
+            currentAccount = accounts[0]
+        })
+        var takerAddress = currentAccount;
         var shouldThrowOnInsufficientBalanceOrAllowance = true;
         const fillTakerTokenAmount = ZeroEx.toBaseUnitAmount(
           new BigNumber(self.fillAmount),

@@ -57,7 +57,11 @@
     
         methods: {
             setAllowance: async function() {
-                const setAllowTxHash = await zeroEx.token.setUnlimitedProxyAllowanceAsync(this.outcomeAddress, window.web3.eth.coinbase)
+                let currentAccount
+                window.web3.eth.getAccounts((err, accounts) => {
+            currentAccount = accounts[0]
+        })
+                const setAllowTxHash = await zeroEx.token.setUnlimitedProxyAllowanceAsync(this.outcomeAddress, currentAccount)
                 this.showDialog = false
                 await zeroEx.awaitTransactionMinedAsync(setAllowTxHash)
             },

@@ -11,6 +11,9 @@
             This view shows the currently deployed outcomes on the network. The table shows the outcome name, the amount of the outcome token that the current account owns, the vote status, and if it is enabled for trading.
           </p>
           <p>
+            You can click on the outcomes in the table to display different options.
+          </p>
+          <p>
             The back button allows you to back the outcome, which gives you outcome tokens in exchange for Ether. You can only back an outcome if you are the creator of that outcome.
           </p>
           <p>
@@ -72,12 +75,24 @@
         </v-card-text>
       </v-card>
     </v-dialog>
+    <v-dialog max-width="500px" v-model="showTransferDialog">
+      <v-card>
+        <v-card-title>
+          Transfer outcome tokens
+        </v-card-title>
+        <v-card-text>
+          <v-text-field label="Recipient" v-model="transferRecipient"></v-text-field>
+          <v-text-field label="Amount" v-model="transferAmount"></v-text-field>
+          <v-btn @click="transfer()">Submit</v-btn>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
     <v-container grid-list-md text-xs-center fluid>
       <v-layout child-flex row wrap>
         <v-flex xs12>
           <v-btn id="newOutcomeBtn" @click="showNewOutcomeDialog = true">New outcome</v-btn>
         </v-flex>
-        <v-flex align-content-start xs2 class="filter">
+        <v-flex xs3 class="filter">
           <v-checkbox label="Created by me" v-model="deployedFilter" @change="applyFilter()"></v-checkbox>
           <v-checkbox label="Created by others" v-model="deployedOthersFilter" @change="applyFilter()"></v-checkbox>
           <v-checkbox label="Met" v-model="metVoteFilter" @change="applyFilter()"></v-checkbox>
@@ -85,7 +100,7 @@
           <v-checkbox label="Unvoted" v-model="unVotedFilter" @change="applyFilter()"></v-checkbox>
           <v-checkbox label="Has amount" v-model="amountFilter" @change="applyFilter()"></v-checkbox>
         </v-flex>
-        <v-flex xs9>
+        <v-flex xs8>
           <v-card id="outcomeList">
             <v-card-title>
               Outcomes
@@ -94,18 +109,29 @@
               </v-text-field>
               <v-btn @click="search()">Search</v-btn>
             </v-card-title>
-            <v-data-table :headers="headers" :items="outcomes" :loading="isLoading" hide-actions class="elevation-1">
+            <template>
+            <v-data-table :headers="headers" :items="outcomes" :loading="isLoading" hide-actions class="elevation-1" item-key="address">
               <v-progress-linear slot="progress" color="blue" indeterminate></v-progress-linear>
               <template slot="items" slot-scope="props">
-            <td class="text-xs-left">{{ props.item.name }}</td>
-            <td class="text-xs-left">{{ parseInt(props.item.amount)/10**18 }}</td>
-            <td class="text-xs-left">{{ props.item.vote }}</td>
-            <td class="text-xs-left"><v-switch v-model="props.item.enabled" @click="setEnabled(props.item.address, props.item.enabled)"></v-switch></td>
-            <td class="text-xs-left"><v-btn block round small @click="showBackDialogFunc(props.item.address)">Back</v-btn></td>
-            <td class="text-xs-left"><v-btn block round small @click="showRedeemDialogFunc(props.item.address)">Redeem</v-btn></td>
-            <td class="text-xs-left"><v-btn block round small @click="showVoteDialogFunc(props.item.address)">Vote</v-btn></td>
-    </template>
-      </v-data-table>
+                <tr @click="props.expanded = !props.expanded">
+                  <td class="text-xs-left">{{ props.item.name }}</td>
+                  <td class="text-xs-left">{{ parseInt(props.item.amount)/10**18 }}</td>
+                  <td class="text-xs-left">{{ props.item.vote }}</td>
+                  <td class="text-xs-left"><v-switch v-model="props.item.enabled" @click="setEnabled(props.item.address, props.item.enabled)"></v-switch></td>
+                </tr>
+              </template>
+                <template slot="expand" slot-scope="props">
+                  <v-card flat>
+                    <v-card-text>
+                      <v-btn round small @click="showBackDialogFunc(props.item.address)">Back</v-btn>
+                      <v-btn round small @click="showRedeemDialogFunc(props.item.address)">Redeem</v-btn>
+                      <v-btn round small @click="showVoteDialogFunc(props.item.address)">Vote</v-btn>
+                      <v-btn round small @click="showTransferDialogFunc(props.item.address)">Transfer</v-btn>
+                    </v-card-text>
+                  </v-card>
+                </template>
+            </v-data-table>
+            </template>
     </v-card>
       </v-flex>
     
@@ -164,6 +190,7 @@
           NOT_MET: 2
         },
         showVoteDialog: false,
+        showTransferDialog: false,
         selectedVote: undefined,
         redeemValue: undefined,
         showRedeemDialog: false,
@@ -175,6 +202,8 @@
         notMetVoteFilter: true,
         unVotedFilter: true,
         amountFilter: false,
+        transferRecipient: undefined,
+        transferAmount: undefined,
         headers: [{
             sortable: false,
             text: "Name"
@@ -191,18 +220,6 @@
             sortable: false,
             text: "Enabled"
           },
-          {
-            sortable: false,
-            text: ""
-          },
-          {
-            sortable: false,
-            text: ""
-          },
-          {
-            sortable: false,
-            text: ""
-          }
         ],
         outcomes: [],
         helpDialog: false
@@ -232,7 +249,6 @@
   
       outcomesProp: function(_outcomes) {
         this.outcomes = _outcomes
-        console.log(this.outcomes)
       }
     },
   
@@ -303,17 +319,33 @@
           }
         );
       },
+
+      transfer: function() {
+        let self = this
+        OutcomeToken.transfer(self.selectedOutcomeAddress, self.transferRecipient, self.transferAmount).then(function(hash) {
+          self.isLoading = true;
+            self.showTransferDialog = false;
+            self.waitForReceipt(hash, function(receipt) {
+              self.isLoading = false;
+              self.$emit("update");
+            })
+        })
+      },
   
       setEnabled: function(address, enabled) {
+        let currentAccount
+        window.web3.eth.getAccounts((err, accounts) => {
+            currentAccount = accounts[0]
+        })
         if (!enabled) {
           const setAllowTxHash = zeroEx.token.setUnlimitedProxyAllowanceAsync(
             address,
-            window.web3.eth.coinbase
+            currentAccount
           );
         } else {
           const setAllowTxHash = zeroEx.token.setProxyAllowanceAsync(
             address,
-            window.web3.eth.coinbase,
+            currentAccount,
             new BigNumber(0)
           );
         }
@@ -387,6 +419,11 @@
   
       showVoteDialogFunc: function(address) {
         this.showVoteDialog = true;
+        this.selectedOutcomeAddress = address;
+      },
+
+      showTransferDialogFunc: function(address) {
+        this.showTransferDialog = true;
         this.selectedOutcomeAddress = address;
       }
     }
